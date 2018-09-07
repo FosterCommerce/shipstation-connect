@@ -340,7 +340,7 @@ class Xml extends Component {
             'GiftMessage'];
         // TODO:
         // foreach ($customFields as $fieldName) {
-        //     if ($customFieldCallbacks = craft()->plugins->call("oneShipStation{$fieldName}")) {
+        //     if ($customFieldCallbacks = craft()->plugins->call("shipStationConnect{$fieldName}")) {
         //         foreach ($customFieldCallbacks as $callback) {
         //             if (is_callable($callback)) {
         //                 $value = $callback($order);
