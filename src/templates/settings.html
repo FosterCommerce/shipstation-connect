@@ -1,0 +1,105 @@
+<div>
+    <h3>ShipStation Configuration</h3>
+    <p>
+        ShipStation's custom store integration works by requesting orders from One ShipStation (shipped and unshipped),
+        and then by notifying One ShipStation when an order has been shipped.
+    </p>
+
+    <h4>Custom Store</h4>
+    <p>
+      Once you've configured One ShipStation's settings below, create a <i>custom store</i> in ShipStation.
+      You'll need to provide ShipStation with:
+    </p>
+    <ul style="list-style-type:disc;margin-left:20px;">
+        <li>Username for ShipStation to retrieve/update orders</li>
+        <li>Password for ShipStation to retrieve/update orders</li>
+        <li>XML Page URL</li>
+        <li>Order Statuses (optional)</li>
+    </ul>
+
+    <h4>Order Statuses</h4>
+    <p>
+        If you have defined custom order statuses, you will need to define them in ShipStation accordingly.
+        By default, Craft Commerce uses "processing" for "Awaiting Shipment Statuses" in ShipStation, and "shipped" for "Shipped Statuses".
+        Other ShipStation statuses can be left as is, as Commerce doesn't have any corresponding statuses. See below for the statuses currently enabled.
+    </p>
+</div>
+
+<hr />
+
+<h3>Settings</h3>
+
+<div class="field">
+    <div class="heading">
+        <label for="shipstation_username">Username</label>
+        <div class="instructions">
+            <p>This username associated with your custom store, not your Craft nor ShipStation usernames.</p>
+        </div>
+    </div>
+    <div class="input">
+        <input class="text fullwidth" type="text" id="shipstation_username" name="shipstationUsername" value="{{ settings.shipstationUsername }}" />
+    </div>
+</div>
+
+<div class="field">
+    <div class="heading">
+        <label for="shipstation_password">Password</label>
+        <div class="instructions">
+            <p>This password associated with your custom store, not your Craft nor ShipStation passwords.</p>
+        </div>
+    </div>
+    <div class="input">
+        <input class="text fullwidth" type="password" id="shipstation_password" name="shipstationPassword" value="{{ settings.shipstationPassword }}" />
+    </div>
+</div>
+
+<div class="field">
+    <div class="heading">
+        <label for="orders_page_size">Page Size for Orders</label>
+        <div class="instructions">
+            <p>The number of orders returned for each request from ShipStation. Too many orders at once will take too long to respond, while too few will require many requests. (Default 25)</p>
+        </div>
+    </div>
+    <div class="input">
+        <input class="text fullwidth" id="orders_page_size" name="ordersPageSize" value="{{ settings.ordersPageSize }}" />
+    </div>
+</div>
+
+<div class="field">
+    <div class="heading">
+        <label for="order_id_prefix">Order ID Prefix</label>
+        <div class="instructions">
+            <p>Order IDs sent to ShipStation will be integers (eg <code>1234</code>). Optionally add a prefix to the ID to guarantee unique IDs (eg a prefix of <code>commerce_</code> would yield an Order ID of <code>commerce_1234</code>).</p>
+        </div>
+    </div>
+    <div class="input">
+        <input class="text fullwidth" type="text" id="order_id_prefix" name="orderIdPrefix" value="{{ settings.orderIdPrefix }}" />
+    </div>
+</div>
+
+<div class="field">
+    <div class="heading">
+        <label>Commerce Order Statuses</label>
+        <div class="instructions">
+            <p>Set your Custom Store's Order Statuses according to your business process and the statuses enabled in Craft Commerce</p>
+        </div>
+    </div>
+    <ul style="list-style-type:disc;margin-left:20px;">
+        {% for status in craft.commerce.getOrderStatuses %}
+        <li>{{ status.name }} &mdash; <code>{{ status.handle }}</code></li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="field">
+    <div class="heading">
+        <label>XML Page URL</label>
+        <div class="instructions">
+            <p>When setting up your ShipStation Custom Store, enter this URL so ShipStation can retrieve and update orders.</p>
+        </div>
+    </div>
+    <div class="input">
+        <br />
+        <pre><code>{{ siteUrl }}actions/shipstation/orders/process</code></pre>
+    </div>
+</div>
