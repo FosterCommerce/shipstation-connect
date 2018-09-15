@@ -23,7 +23,7 @@ class Plugin extends \craft\base\Plugin
 
     public function settingsHtml()
     {
-        return Craft::$app->getView()->renderTemplate('shipstation/settings', [
+        return Craft::$app->getView()->renderTemplate('shipstationconnect/settings', [
             'settings' => $this->getSettings()
         ]);
     }
