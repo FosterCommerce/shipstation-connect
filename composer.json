@@ -12,7 +12,7 @@
     }],
     "autoload": {
         "psr-4": {
-          "fostercommerce\\shipstation\\": "src/"
+          "fostercommerce\\shipstationconnect\\": "src/"
         }
       },
     "require-dev": {
