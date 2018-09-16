@@ -68,8 +68,8 @@ class Xml extends Component {
         $this->shippingMethod($order_xml, $order);
 
         $paymentSource = $order->getPaymentSource();
-        if ($paymentSource && $paymentObj = $paymentSource->description) {
-            $this->addChildWithCDATA($order_xml, 'PaymentMethod', $paymentObj->name);
+        if ($paymentSource) {
+            $this->addChildWithCDATA($order_xml, 'PaymentMethod', $paymentSource->description);
         }
 
         $items_xml = $this->items($order_xml, $order->getLineItems());
