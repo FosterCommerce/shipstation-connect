@@ -1,7 +1,6 @@
 # ShipStation Connect for Craft CMS 3.x and Commerce 2.x
-A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
-_TODO: Update README_
+A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
 ## Requirements
 
@@ -32,17 +31,23 @@ composer require fostercommerce/shipstationconnect
 
 After installing with composer, go to the Craft control panel plugin settings page to install and configure the settings for the plugin.
 
-## Configuration
+## Custom Store Configuration
+
+Configure your connection in ShipStation following these instructions: [ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/205928478-ShipStation-Custom-Store-Development-Guide#3a).
+
+### Connect Your Craft Store to ShipStation
+
+The "URL to Custom XML Page" is shown in the ShipStation Connect settings view in Craft.
+
+### Username/Password
+
+ShipStation allows you to set a custom username and password combination for a connected store. This combination should match the values stored in the ShipStation Connnect settings view in your Craft control panel.
+
+**Note:** These values are *not* your ShipStation credentials, nor your Craft user credentials.
 
 ### Order Statuses
 
 Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit each platform to use custom statuses and ShipStation can match multiple Craft statuses to a single ShipStation status, when needed.
-
-### Connect Your Craft Store to ShipStation
-
-Configure your connection in ShipStation following these instructions: [ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/205928478-ShipStation-Custom-Store-Development-Guide#3a).
-
-The "URL to Custom XML Page" is shown in the ShipStation Connect settings view in Craft.
 
 ## Template Examples
 

@@ -11,10 +11,10 @@ use fostercommerce\shipstationconnect\Plugin;
 
 class OrdersController extends Controller
 {
-    
-    // Disable CSRF validation for the entire controller 
+
+    // Disable CSRF validation for the entire controller
     public $enableCsrfValidation = false;
-    
+
     protected $allowAnonymous = true;
 
     /**
