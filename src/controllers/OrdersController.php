@@ -3,6 +3,7 @@ namespace fostercommerce\shipstationconnect\controllers;
 
 use Craft;
 use craft\web\Controller;
+use craft\elements\MatrixBlock;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
 use yii\web\HttpException;
@@ -161,7 +162,23 @@ class OrdersController extends Controller
         $order->message = $this->orderStatusMessageFromShipstationParams();
         $shippingInformation = $this->getShippingInformationFromParams();
 
-        if (Craft::$app->getElements()->saveElement($order)) {
+        $matrix = Craft::$app->fields->getFieldByHandle('shippingInfo');
+        $blockTypes = Craft::$app->matrix->getBlockTypesByFieldId($matrix->id);
+        $blockType = array_shift($blockTypes);
+
+        if ($blockType && $order) {
+            $block = new MatrixBlock([
+                'ownerId' => $order->id,
+                'fieldId' => $matrix->id,
+                'typeId' => $blockType->id,
+            ]);
+            $block->setFieldValue('carrier', $shippingInformation['carrier']);
+            $block->setFieldValue('service', $shippingInformation['service']);
+            $block->setFieldValue('tracking', $shippingInformation['trackingNumber']);
+            Craft::$app->elements->saveElement($block);
+        }
+
+        if (Craft::$app->elements->saveElement($order)) {
             return $this->asJson(['success' => true]);
         } else {
             throw new ErrorException('Failed to save order with id ' . $order->id);
