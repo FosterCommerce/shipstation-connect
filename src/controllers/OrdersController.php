@@ -42,12 +42,29 @@ class OrdersController extends Controller
                     throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
             }
         } catch (ErrorException $e) {
+            $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         } catch (HttpException $e) {
+            $action = $request->getParam('action');
+            if ($action) {
+                $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
+            } else {
+                $this->logException('An action is required. Supported actions: export, shipnotify.');
+            }
+
             return $this->asErrorJson($e->getMessage())->setStatusCode($e->statusCode);
         } catch (\Exception $e ) {
+            $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         }
+    }
+
+    private function logException($msg, $params, $e) {
+        Craft::error(
+            Craft::t('shipstationconnect', $msg, $params),
+            __METHOD__
+        );
+        Craft::$app->getErrorHandler()->logException($e);
     }
 
     /**
@@ -159,23 +176,43 @@ class OrdersController extends Controller
         }
 
         $order->orderStatusId = $status->id;
-        $order->message = $this->orderStatusMessageFromShipstationParams();
+        $order->message = 'Marking order as shipped. Adding shipping information.';
         $shippingInformation = $this->getShippingInformationFromParams();
 
         $matrix = Craft::$app->fields->getFieldByHandle('shippingInfo');
-        $blockTypes = Craft::$app->matrix->getBlockTypesByFieldId($matrix->id);
-        $blockType = array_shift($blockTypes);
 
-        if ($blockType && $order) {
-            $block = new MatrixBlock([
-                'ownerId' => $order->id,
-                'fieldId' => $matrix->id,
-                'typeId' => $blockType->id,
-            ]);
-            $block->setFieldValue('carrier', $shippingInformation['carrier']);
-            $block->setFieldValue('service', $shippingInformation['service']);
-            $block->setFieldValue('tracking', $shippingInformation['trackingNumber']);
-            Craft::$app->elements->saveElement($block);
+        if ($matrix) {
+            $blockTypes = Craft::$app->matrix->getBlockTypesByFieldId($matrix->id);
+            $blockType = array_shift($blockTypes);
+
+            if ($blockType && $order && $this->validateShippingInformation($shippingInformation)) {
+                $block = new MatrixBlock([
+                    'ownerId' => $order->id,
+                    'fieldId' => $matrix->id,
+                    'typeId' => $blockType->id,
+                ]);
+                $block->setFieldValue('carrier', $shippingInformation['carrier']);
+                $block->setFieldValue('service', $shippingInformation['service']);
+                $block->setFieldValue('tracking', $shippingInformation['trackingNumber']);
+
+                if (!Craft::$app->elements->saveElement($block)) {
+                    Craft::warning(
+                        Craft::t(
+                            'shipstationconnect',
+                            'Unable to save shipping information.'
+                        ),
+                        __METHOD__
+                    );
+                }
+            }
+        } else {
+            Craft::warning(
+                Craft::t(
+                    'shipstationconnect',
+                    'Missing shippingInfo Matrix field. Ignoring.'
+                ),
+                __METHOD__
+            );
         }
 
         if (Craft::$app->elements->saveElement($order)) {
@@ -185,20 +222,15 @@ class OrdersController extends Controller
         }
     }
 
-    /**
-     * Craft Commerce stores a message along with all Order Status changes.
-     * We'll leverage that to store the carrier, service, and tracking number sent to us from ShipStation.
-     *
-     * In the future we may prefer this to be rendered in a template, or even stored in another variable.
-     *
-     * @return String
-     */
-    protected function orderStatusMessageFromShipstationParams() {
-        $message = array();
-        foreach ($this->getShippingInformationFromParams() as $field => $value) {
-            $message[] = $field . ': ' . $value;
+    private function validateShippingInformation ($info) {
+        // Requires at least one value
+        foreach ($info as $key => $value) {
+            if ($value && !empty(trim($value))) {
+                return true;
+            }
         }
-        return implode($message, ', ');
+
+        return false;
     }
 
     /**
@@ -212,9 +244,10 @@ class OrdersController extends Controller
      */
     protected function getShippingInformationFromParams() {
         $request = Craft::$app->getRequest();
-        return ['carrier' => $request->getParam('carrier'),
-                'service' => $request->getParam('service'),
-                'trackingNumber' => $request->getParam('tracking_number')
+        return [
+            'carrier' => $request->getParam('carrier'),
+            'service' => $request->getParam('service'),
+            'trackingNumber' => $request->getParam('tracking_number'),
         ];
     }
 
