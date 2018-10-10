@@ -113,7 +113,7 @@ class m181009_102456_install_matrix_field extends Migration
             });
             $tab = array_shift($tabs);
 
-            if(!$tab) {
+            if (!$tab) {
                 $tab = new FieldLayoutTab([
                     'name' => $tabName,
                     'sortOrder' => count($currentTabs),

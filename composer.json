@@ -3,7 +3,7 @@
     "description": "A Craft CMS plugin for integrating Craft Commerce with ShipStation",
     "homepage": "https://github.com/fostercommerce/shipstation-connect",
     "type": "craft-plugin",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "keywords": ["craft","plugin","shipstation"],
     "license": "proprietary",
     "support": {
@@ -24,6 +24,9 @@
       },
     "require": {
         "craftcms/cms": "^3.0.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.13"
     },
     "extra": {
       "handle": "shipstationconnect",

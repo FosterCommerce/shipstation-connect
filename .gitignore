@@ -1,5 +1,4 @@
-# MISC FILES
-# ----------------------------------
-.DS_Store
+vendor
+.php_cs.cache
 
-vendor/*
+.DS_Store

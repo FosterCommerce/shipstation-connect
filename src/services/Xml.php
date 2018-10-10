@@ -9,9 +9,10 @@ use craft\commerce\models\Customer;
 use craft\commerce\models\Address;
 use yii\base\Component;
 
-class Xml extends Component {
-
-    public function shouldInclude($order) {
+class Xml extends Component
+{
+    public function shouldInclude($order)
+    {
         return $order->getShippingAddress() && $order->getBillingAddress();
     }
 
@@ -23,7 +24,8 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Orders'
      * @return SimpleXMLElement
      */
-    public function orders(\SimpleXMLElement $xml, $orders, $name='Orders') {
+    public function orders(\SimpleXMLElement $xml, $orders, $name='Orders')
+    {
         $orders_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
         foreach ($orders as $order) {
             if ($this->shouldInclude($order)) {
@@ -42,22 +44,42 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Order'
      * @return SimpleXMLElement
      */
-    public function order(\SimpleXMLElement $xml, Order $order, $name='Order') {
+    public function order(\SimpleXMLElement $xml, Order $order, $name='Order')
+    {
         $order_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
-        $order_mapping = ['OrderID'         => ['callback' => function($order) {
-                                                   $settings =  Plugin::getInstance()->settings;
-                                                   $prefix = $settings->orderIdPrefix;
-                                                   return $prefix . $order->id;
-                                               }],
-                          'OrderNumber'     => 'number',
-                          'OrderStatus'     => ['callback' => function($order) { return $order->getOrderStatus()->handle; }],
-                          'OrderTotal'      => ['callback' => function($order) { return round($order->totalPrice, 2); },
-                                                'cdata' => false],
-                          'TaxAmount'       => ['callback' => function($order) { return $order->getAdjustmentsTotalByType('tax'); },
-                                                'cdata' => false],
-                          'ShippingAmount'  => ['callback' => function($order) { return $order->getAdjustmentsTotalByType('shipping'); },
-                                                'cdata' => false]
+        $order_mapping = [
+            'OrderID' => [
+                'callback' => function ($order) {
+                    $settings =  Plugin::getInstance()->settings;
+                    $prefix = $settings->orderIdPrefix;
+                    return $prefix . $order->id;
+                }
+            ],
+            'OrderNumber' => 'number',
+            'OrderStatus' => [
+                'callback' => function ($order) {
+                    return $order->getOrderStatus()->handle;
+                }
+            ],
+            'OrderTotal' => [
+                'callback' => function ($order) {
+                    return round($order->totalPrice, 2);
+                },
+                'cdata' => false,
+            ],
+            'TaxAmount' => [
+                'callback' => function ($order) {
+                    return $order->getAdjustmentsTotalByType('tax');
+                },
+                'cdata' => false,
+            ],
+            'ShippingAmount' => [
+                'callback' => function ($order) {
+                    return $order->getAdjustmentsTotalByType('shipping');
+                },
+                'cdata' => false,
+            ]
         ];
         $this->mapCraftModel($order_xml, $order_mapping, $order);
 
@@ -94,7 +116,8 @@ class Xml extends Component {
      * @param [Order] $order
      * @return null
      */
-    public function shippingMethod(\SimpleXMLElement $order_xml, $order) {
+    public function shippingMethod(\SimpleXMLElement $order_xml, $order)
+    {
         $shippingMethod = null;
         if (!is_null($shippingMethod) || ($shippingMethod = $order->getShippingMethod()->handle)) {
             $this->addChildWithCDATA($order_xml, 'ShippingMethod', $shippingMethod);
@@ -109,7 +132,8 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Items'
      * @return SimpleXMLElement
      */
-    public function items(\SimpleXMLElement $xml, $items, $name='Items') {
+    public function items(\SimpleXMLElement $xml, $items, $name='Items')
+    {
         $items_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
         foreach ($items as $item) {
             $this->item($items_xml, $item);
@@ -126,18 +150,19 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Item'
      * @return SimpleXMLElement
      */
-    public function item(\SimpleXMLElement $xml, LineItem $item, $name='Item') {
+    public function item(\SimpleXMLElement $xml, LineItem $item, $name='Item')
+    {
         $item_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
         $item_mapping = [
             'SKU' => [
-                'callback' => function($item) {
+                'callback' => function ($item) {
                     return $item->snapshot['sku'];
                 }
             ],
             'Name' => 'description',
             'Weight' => [
-                'callback' => function($item) {
+                'callback' => function ($item) {
                     $weight_units = CommercePlugin::getInstance()->settings->weightUnits;
 
                     if ($weight_units == 'kg') {
@@ -147,22 +172,22 @@ class Xml extends Component {
 
                     return round($item->weight, 2);
                 },
-                'cdata' => false
+                'cdata' => false,
             ],
             'Quantity' => [
                 'field' => 'qty',
-                'cdata' => false
+                'cdata' => false,
             ],
             'UnitPrice' => [
-                'callback' => function($item) {
+                'callback' => function ($item) {
                     return round($item->salePrice, 2);
                 },
-                'cdata' => false
+                'cdata' => false,
             ]
         ];
         $this->mapCraftModel($item_xml, $item_mapping, $item);
 
-        switch(CommercePlugin::getInstance()->settings->weightUnits) {
+        switch (CommercePlugin::getInstance()->settings->weightUnits) {
             case 'lb':
                 $ss_weight_units = 'Pounds';
                 break;
@@ -188,7 +213,8 @@ class Xml extends Component {
      * @param  string                 $name [description]
      * @return [type]                       [description]
      */
-    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item') {
+    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item')
+    {
         // If no discount was applied, skip this
         if ($order->getAdjustmentsTotalByType('discount') >= 0) {
             return;
@@ -197,13 +223,31 @@ class Xml extends Component {
         $discount_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
         $discount_mapping = [
-            'SKU'        => ['callback' => function($order) { return ''; }, 'cdata' => false],
-            'Name'       => 'couponCode',
-            'Quantity'   => ['callback' => function($order) { return 1; }, 'cdata' => false],
+            'SKU' => [
+                'callback' => function ($order) {
+                    return '';
+                },
+                'cdata' => false
+            ],
+            'Name' => 'couponCode',
+            'Quantity' => [
+                'callback' => function ($order) {
+                    return 1;
+                },
+                'cdata' => false
+            ],
             'UnitPrice'  => [
-                'callback' => function($order) { return number_format($order->getAdjustmentsTotalByType('discount'), 2); },
-                'cdata' => false],
-            'Adjustment' => ['callback' => function($order) { return 'true'; }, 'cdata' => false],
+                'callback' => function ($order) {
+                    return number_format($order->getAdjustmentsTotalByType('discount'), 2);
+                },
+                'cdata' => false,
+            ],
+            'Adjustment' => [
+                'callback' => function ($order) {
+                    return 'true';
+                },
+                'cdata' => false,
+            ],
         ];
         $this->mapCraftModel($discount_xml, $discount_mapping, $order);
 
@@ -218,7 +262,8 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Options'
      * @return SimpleXMLElement
      */
-    public function options(\SimpleXMLElement $xml, $options, $name='Options') {
+    public function options(\SimpleXMLElement $xml, $options, $name='Options')
+    {
         $options_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
         foreach ($options as $key => $value) {
@@ -238,7 +283,8 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Customer'
      * @return SimpleXMLElement
      */
-    public function customer(\SimpleXMLElement $xml, Customer $customer, $name='Customer') {
+    public function customer(\SimpleXMLElement $xml, Customer $customer, $name='Customer')
+    {
         $customer_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
         $customer_mapping = ['CustomerCode' => 'id'];
@@ -255,7 +301,8 @@ class Xml extends Component {
      * @param Customer $customer
      * @return SimpleXMLElement, or null if no address exists
      */
-    public function billTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer) {
+    public function billTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer)
+    {
         if ($billingAddress = $order->getBillingAddress()) {
             $billTo_xml = $this->address($customer_xml, $billingAddress, 'BillTo');
             if ($billingAddress->firstName && $billingAddress->lastName) {
@@ -280,7 +327,8 @@ class Xml extends Component {
      * @param Customer $customer
      * @return SimpleXMLElement, or null if no address exists
      */
-    public function shipTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer) {
+    public function shipTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer)
+    {
         $shippingAddress = $order->getShippingAddress();
         $shipTo_xml = $this->address($customer_xml, $shippingAddress, 'ShipTo');
         if ($shippingAddress->firstName && $shippingAddress->lastName) {
@@ -302,19 +350,25 @@ class Xml extends Component {
      * @param String $name the name of the child node, default 'Address'
      * @return SimpleXMLElement
      */
-    public function address(\SimpleXMLElement $xml, Address $address=null, $name='Address') {
+    public function address(\SimpleXMLElement $xml, Address $address=null, $name='Address')
+    {
         $address_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
         if (!is_null($address)) {
-            $address_mapping = ['Company'    => 'businessName',
-                                'Phone'      => 'phone',
-                                'Address1'   => 'address1',
-                                'Address2'   => 'address2',
-                                'City'       => 'city',
-                                'State'      => 'stateText',
-                                'PostalCode' => 'zipCode',
-                                'Country'    =>  ['callback' => function($address) { return $address->countryId ? $address->getCountry()->iso : null; },
-                                                  'cdata'    => false]
+            $address_mapping = [
+                'Company' => 'businessName',
+                'Phone' => 'phone',
+                'Address1' => 'address1',
+                'Address2' => 'address2',
+                'City' => 'city',
+                'State' => 'stateText',
+                'PostalCode' => 'zipCode',
+                'Country' =>  [
+                    'callback' => function ($address) {
+                        return $address->countryId ? $address->getCountry()->iso : null;
+                    },
+                    'cdata' => false,
+                ]
             ];
             $this->mapCraftModel($address_xml, $address_mapping, $address);
         }
@@ -329,7 +383,8 @@ class Xml extends Component {
      * @param Order $order
      * @return SimpleXMLElement
      */
-    public function customOrderFields(\SimpleXMLElement $order_xml, Order $order) {
+    public function customOrderFields(\SimpleXMLElement $order_xml, Order $order)
+    {
         $customFields = [
             'CustomField1',
             'CustomField2',
@@ -355,7 +410,8 @@ class Xml extends Component {
 
     /***************************** helpers *******************************/
 
-    protected function mapCraftModel($xml, $mapping, $model) {
+    protected function mapCraftModel($xml, $mapping, $model)
+    {
         foreach ($mapping as $name => $attr) {
             $value = $this->valueFromMappingAndModel($attr, $model);
 
@@ -394,7 +450,8 @@ class Xml extends Component {
      *   @param BaseModel $model, an instance of a craft model
      *   @return string
      */
-    protected function valueFromMappingAndModel($options, $model) {
+    protected function valueFromMappingAndModel($options, $model)
+    {
         $value = null;
 
         //if field name exists in the options array
@@ -403,20 +460,20 @@ class Xml extends Component {
             $value = $model->{$field};
         }
         //if value is coming from a callback in the options array
-        else if (is_array($options) && array_key_exists('callback', $options)) {
+        elseif (is_array($options) && array_key_exists('callback', $options)) {
             $callback = $options['callback'];
             $value = $callback($model);
         }
         //if value is a callback
-        else if (is_object($options) && is_callable($options)) {
+        elseif (is_object($options) && is_callable($options)) {
             $value = $options($model);
         }
         //if value is an attribute on the model, passed as a string field name
-        else if (is_string($options)) {
+        elseif (is_string($options)) {
             $value = $model->{$options};
         }
         // if null, leave blank
-        else if (is_null($options)) {
+        elseif (is_null($options)) {
             $value = '';
         }
 
@@ -436,9 +493,10 @@ class Xml extends Component {
      * @param $value Mixed the value of the new child node, which will be wrapped in CDATA
      * @return SimpleXMLElement, the new child
      */
-    protected function addChildWithCDATA(&$xml, $name, $value) {
+    protected function addChildWithCDATA(&$xml, $name, $value)
+    {
         $new_child = $xml->addChild($name);
-        if ($new_child !== NULL) {
+        if ($new_child !== null) {
             $node = dom_import_simplexml($new_child);
             $node->appendChild($node->ownerDocument->createCDATASection($value));
         }

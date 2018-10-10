@@ -18,7 +18,7 @@ Go to the Plugin Store in your project’s Control Panel and search for “ShipS
 
 Open your terminal (command line) and run the following commands:
 
-```
+```bash
 # go to the project directory
 cd /path/to/my-project
 
@@ -48,6 +48,12 @@ ShipStation allows you to set a custom username and password combination for a c
 ### Order Statuses
 
 Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit each platform to use custom statuses and ShipStation can match multiple Craft statuses to a single ShipStation status, when needed.
+
+## Commerce Integration
+
+ShipStation Connect will create a new Matrix field called "Shipping Info" under the "ShipStation Connect" Group. It will also automatically add a new tab to the Orders layout in Craft Commerce called "ShipStation Connect" which will include the Shipping Info field.
+
+When a shipping notification is received for an order from ShipStation, the plugin will add the shipping information to the Shipping Information field on the order and set the order status to Shipped.
 
 ## Template Examples
 

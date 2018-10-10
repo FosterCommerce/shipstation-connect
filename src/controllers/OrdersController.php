@@ -26,7 +26,8 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess() {
+    public function actionProcess()
+    {
         try {
             if (!$this->authenticate()) {
                 throw new HttpException(401, 'Invalid ShipStation username or password.');
@@ -53,13 +54,14 @@ class OrdersController extends Controller
             }
 
             return $this->asErrorJson($e->getMessage())->setStatusCode($e->statusCode);
-        } catch (\Exception $e ) {
+        } catch (\Exception $e) {
             $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         }
     }
 
-    private function logException($msg, $params, $e) {
+    private function logException($msg, $params, $e)
+    {
         Craft::error(
             Craft::t('shipstationconnect', $msg, $params),
             __METHOD__
@@ -72,7 +74,8 @@ class OrdersController extends Controller
      *
      * @return bool, true if successfully authenticated or false otherwise
      */
-    protected function authenticate() {
+    protected function authenticate()
+    {
         $settings = Plugin::getInstance()->settings;
         $expectedUsername = $settings->shipstationUsername;
         $expectedPassword = $settings->shipstationPassword;
@@ -88,7 +91,8 @@ class OrdersController extends Controller
      *
      * @return SimpleXMLElement Orders XML
      */
-    protected function getOrders() {
+    protected function getOrders()
+    {
         $query = Order::find();
 
         $start_date = $this->parseDate('start_date');
@@ -117,7 +121,8 @@ class OrdersController extends Controller
      * @param ElementCriteriaModel, a REFERENCE to the criteria instance
      * @return Int total number of pages
      */
-    protected function paginateOrders(&$query) {
+    protected function paginateOrders(&$query)
+    {
         $pageSize = Plugin::getInstance()->settings->ordersPageSize;
         if (!is_numeric($pageSize) || $pageSize < 1) {
             $pageSize = 25;
@@ -141,15 +146,17 @@ class OrdersController extends Controller
      * @param String $field_name, the name of the field in GET params
      * @return String|null the formatted date string
      */
-    protected function parseDate($field_name) {
+    protected function parseDate($field_name)
+    {
         $request = Craft::$app->getRequest();
         if ($date_raw = $request->getParam($field_name)) {
             $date = strtotime($date_raw);
             if ($date !== false) {
-                if ($field_name === 'start_date')
+                if ($field_name === 'start_date') {
                     return date('Y-m-d H:i:s', $date);
-                else
+                } else {
                     return date('Y-m-d H:i:59', $date);
+                }
             }
         }
         return null;
@@ -165,7 +172,8 @@ class OrdersController extends Controller
      *
      * @throws ErrorException if the order fails to save
      */
-    protected function postShipment() {
+    protected function postShipment()
+    {
         $order = $this->orderFromParams();
 
         $status = CommercePlugin::getInstance()->orderStatuses->getOrderStatusByHandle('shipped');
@@ -220,7 +228,8 @@ class OrdersController extends Controller
         }
     }
 
-    private function validateShippingInformation ($info) {
+    private function validateShippingInformation($info)
+    {
         // Requires at least one value
         foreach ($info as $key => $value) {
             if ($value && !empty(trim($value))) {
@@ -240,7 +249,8 @@ class OrdersController extends Controller
      *
      * @return array
      */
-    protected function getShippingInformationFromParams() {
+    protected function getShippingInformationFromParams()
+    {
         $request = Craft::$app->getRequest();
         return [
             'carrier' => $request->getParam('carrier'),
@@ -258,7 +268,8 @@ class OrdersController extends Controller
      * @throws HttpException, 404 if not found, 406 if order number is invalid
      * @return Commerce_Order
      */
-    protected function orderFromParams() {
+    protected function orderFromParams()
+    {
         $request = Craft::$app->getRequest();
         if ($order_number = $request->getParam('order_number')) {
             if ($order = CommercePlugin::getInstance()->orders->getOrderByNumber($order_number)) {
@@ -277,7 +288,8 @@ class OrdersController extends Controller
      * @param SimpleXMLElement $xml
      * @return null
      */
-    protected function returnXML(\SimpleXMLElement $xml) {
+    protected function returnXML(\SimpleXMLElement $xml)
+    {
         header("Content-type: text/xml");
         // Output it into a buffer, in case TasksService wants to close the connection prematurely
         ob_start();

@@ -113,7 +113,7 @@ class Install extends Migration
             });
             $tab = array_shift($tabs);
 
-            if(!$tab) {
+            if (!$tab) {
                 $tab = new FieldLayoutTab([
                     'name' => $tabName,
                     'sortOrder' => count($currentTabs),
@@ -135,6 +135,5 @@ class Install extends Migration
 
     public function safeDown()
     {
-
     }
 }
