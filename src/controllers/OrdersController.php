@@ -89,26 +89,24 @@ class OrdersController extends Controller
      * @return SimpleXMLElement Orders XML
      */
     protected function getOrders() {
-        $criteria = Order::find();
+        $query = Order::find();
+
         $start_date = $this->parseDate('start_date');
         $end_date = $this->parseDate('end_date');
 
         if ($start_date && $end_date) {
-            $criteria->dateOrdered = array('and', '> '.$start_date, '< '.$end_date);
+            $query->dateOrdered(array('and', '> '.$start_date, '< '.$end_date));
         }
 
-        // null orderStatusId means the order is only a cart
-        $criteria->orderStatusId = 'not null';
+        $query->isCompleted(true);
+        $query->orderBy('dateOrdered asc');
 
-        // Order the results to be consistent across pages
-        $criteria->order = 'dateOrdered asc';
-
-        $num_pages = $this->paginateOrders($criteria);
+        $num_pages = $this->paginateOrders($query);
 
         $parent_xml = new \SimpleXMLElement('<Orders />');
         $parent_xml->addAttribute('pages', $num_pages);
 
-        Plugin::getInstance()->xml->orders($parent_xml, $criteria->all());
+        Plugin::getInstance()->xml->orders($parent_xml, $query->all());
 
         $this->returnXML($parent_xml);
     }
@@ -119,20 +117,20 @@ class OrdersController extends Controller
      * @param ElementCriteriaModel, a REFERENCE to the criteria instance
      * @return Int total number of pages
      */
-    protected function paginateOrders(&$criteria) {
+    protected function paginateOrders(&$query) {
         $pageSize = Plugin::getInstance()->settings->ordersPageSize;
         if (!is_numeric($pageSize) || $pageSize < 1) {
             $pageSize = 25;
         }
 
-        $numPages = ceil($criteria->count() / $pageSize);
+        $numPages = ceil($query->count() / $pageSize);
         $pageNum = Craft::$app->getRequest()->getParam('page');
         if (!is_numeric($pageNum) || $pageNum < 1) {
             $pageNum = 1;
         }
 
-        $criteria->limit($pageSize);
-        $criteria->offset(($pageNum - 1) * $pageSize);
+        $query->limit($pageSize);
+        $query->offset(($pageNum - 1) * $pageSize);
 
         return $numPages;
     }

@@ -54,9 +54,9 @@ class Xml extends Component {
                           'OrderStatus'     => ['callback' => function($order) { return $order->getOrderStatus()->handle; }],
                           'OrderTotal'      => ['callback' => function($order) { return round($order->totalPrice, 2); },
                                                 'cdata' => false],
-                          'TaxAmount'       => ['field' => 'totalTax',
+                          'TaxAmount'       => ['callback' => function($order) { return $order->getAdjustmentsTotalByType('tax'); },
                                                 'cdata' => false],
-                          'ShippingAmount'  => ['field' => 'totalShippingCost',
+                          'ShippingAmount'  => ['callback' => function($order) { return $order->getAdjustmentsTotalByType('shipping'); },
                                                 'cdata' => false]
         ];
         $this->mapCraftModel($order_xml, $order_mapping, $order);
@@ -337,7 +337,8 @@ class Xml extends Component {
             'InternalNotes',
             'CustomerNotes',
             'Gift',
-            'GiftMessage'];
+            'GiftMessage'
+        ];
         // TODO:
         // foreach ($customFields as $fieldName) {
         //     if ($customFieldCallbacks = craft()->plugins->call("shipStationConnect{$fieldName}")) {
