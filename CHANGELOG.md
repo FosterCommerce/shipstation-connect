@@ -1,6 +1,13 @@
 # Changelog
 
-## 1.0.8 - 2019-10-10
+## 1.0.9 - 2018-10-23
+
+### Fixed
+
+- Fix `getShippingInfo` null reference error.
+- Fix "Undefined variable" error when invalid credentials are passed to the process action.
+
+## 1.0.8 - 2018-10-10
 
 ### Added
 
