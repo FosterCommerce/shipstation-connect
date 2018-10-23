@@ -28,12 +28,12 @@ class OrdersController extends Controller
      */
     public function actionProcess()
     {
+        $request = Craft::$app->request;
         try {
             if (!$this->authenticate()) {
                 throw new HttpException(401, 'Invalid ShipStation username or password.');
             }
 
-            $request = Craft::$app->getRequest();
             switch ($request->getParam('action')) {
                 case 'export':
                     return $this->getOrders();
