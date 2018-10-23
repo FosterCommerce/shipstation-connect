@@ -118,9 +118,8 @@ class Xml extends Component
      */
     public function shippingMethod(\SimpleXMLElement $order_xml, $order)
     {
-        $shippingMethod = null;
-        if (!is_null($shippingMethod) || ($shippingMethod = $order->getShippingMethod()->handle)) {
-            $this->addChildWithCDATA($order_xml, 'ShippingMethod', $shippingMethod);
+        if ($shippingMethod = $order->getShippingMethod()) {
+            $this->addChildWithCDATA($order_xml, 'ShippingMethod', $shippingMethod->handle);
         }
     }
 
