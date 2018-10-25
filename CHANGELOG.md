@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.10 - 2018-10-25
+
+### Added
+
+- Added a link to ShipStation as a CP sub nav item.
+
+### Updated
+
+- Use Craft form fields instead of regular form inputs.
+- Set settings view as a sub nav item in the CP.
+
 ## 1.0.9 - 2018-10-23
 
 ### Fixed
