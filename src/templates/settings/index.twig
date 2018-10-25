@@ -1,0 +1,109 @@
+{% import "_includes/forms" as forms %}
+{% extends "_layouts/cp" %}
+
+{% set title = 'Settings'|t('better-logging') %}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = true %}
+
+{% block actionButton %}
+  <div class="btngroup">
+     <input type="submit" class="btn submit" value="{{ "Save"|t('shipstationconnect') }}">
+  </div>
+{% endblock %}
+
+{% set content %}
+  <input type="hidden" name="action" value="shipstationconnect/settings/save">
+  {{ redirectInput('shipstationconnect/settings') }}
+  <div>
+      <h4>Custom Store</h4>
+      <p>
+          ShipStation's custom store integration works by requesting orders from ShipStation Connect (shipped and unshipped),
+          and then by notifying ShipStation Connect when an order has been shipped.
+      </p>
+      <p>
+        Once you've configured ShipStation Connects's settings below, create a <i>custom store</i> in ShipStation.
+        You'll need to provide ShipStation with:
+      </p>
+      <ul style="list-style-type:disc;margin-left:20px;">
+          <li>Username for ShipStation to retrieve/update orders</li>
+          <li>Password for ShipStation to retrieve/update orders</li>
+          <li>XML Page URL</li>
+          <li>Order Statuses (optional)</li>
+      </ul>
+
+      <h4>Order Statuses</h4>
+      <p>
+          If you have defined custom order statuses, you will need to define them in ShipStation accordingly.
+          By default, Craft Commerce uses "processing" for "Awaiting Shipment Statuses" in ShipStation, and "shipped" for "Shipped Statuses".
+          Other ShipStation statuses can be left as is, as Commerce doesn't have any corresponding statuses. See below for the statuses currently enabled.
+      </p>
+  </div>
+
+  <hr />
+
+  <h3>Settings</h3>
+
+  {{ forms.textField({
+      label: 'Username'|t('shipstationconnect'),
+      instructions: 'The username associated with your custom store, not your Craft nor ShipStation usernames.'|t('shipstationconnect'),
+      id: 'shipstation_username',
+      name: 'settings[shipstationUsername]',
+      value: settings.shipstationUsername,
+      errors: settings.getErrors('shipstationUsername'),
+  }) }}
+
+  {{ forms.textField({
+      label: 'Password'|t('shipstationconnect'),
+      instructions: 'The password associated with your custom store, not your Craft nor ShipStation passwords.'|t('shipstationconnect'),
+      id: 'shipstation_password',
+      type: 'password',
+      name: 'settings[shipstationPassword]',
+      value: settings.shipstationPassword,
+      errors: settings.getErrors('shipstationPassword'),
+  }) }}
+
+  {{ forms.textField({
+      label: 'Page Size for Orders'|t('shipstationconnect'),
+      instructions: 'The number of orders returned for each request from ShipStation. Too many orders at once will take too long to respond, while too few will require many requests.'|t('shipstationconnect'),
+      id: 'orders_page_size',
+      name: 'settings[ordersPageSize]',
+      value: settings.ordersPageSize,
+      errors: settings.getErrors('ordersPageSize'),
+  }) }}
+
+  {{ forms.textField({
+      label: 'Order ID Prefix'|t('shipstationconnect'),
+      instructions: 'Order IDs sent to ShipStation will be integers (eg <code>1234</code>). Optionally add a prefix to the ID to guarantee unique IDs (eg a prefix of <code>commerce_</code> would yield an Order ID of <code>commerce_1234</code>).'|raw|t('shipstationconnect'),
+      id: 'order_id_prefix',
+      name: 'settings[orderIdPrefix]',
+      value: settings.orderIdPrefix,
+      errors: settings.getErrors('orderIdPrefix'),
+  }) }}
+
+  <div class="field">
+      <div class="heading">
+          <label>Commerce Order Statuses</label>
+          <div class="instructions">
+              <p>Set your Custom Store's Order Statuses according to your business process and the statuses enabled in Craft Commerce</p>
+          </div>
+      </div>
+      <ul style="list-style-type:disc;margin-left:20px;">
+          {% for status in craft.commerce.orderStatuses.getAllOrderStatuses %}
+          <li>{{ status.name }} &mdash; <code>{{ status.handle }}</code></li>
+          {% endfor %}
+      </ul>
+  </div>
+
+  <div class="field">
+      <div class="heading">
+          <label>XML Page URL</label>
+          <div class="instructions">
+              <p>When setting up your ShipStation Custom Store, enter this URL so ShipStation can retrieve and update orders.</p>
+          </div>
+      </div>
+      <div class="input">
+          <br />
+          <pre><code>{{ siteUrl }}actions/shipstationconnect/orders/process</code></pre>
+      </div>
+  </div>
+{% endset %}

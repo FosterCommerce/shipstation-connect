@@ -2,11 +2,15 @@
 namespace fostercommerce\shipstationconnect;
 
 use Craft;
+use craft\events\RegisterUrlRulesEvent;
+use craft\web\UrlManager;
+use yii\base\Event;
 use yii\base\Exception;
 
 class Plugin extends \craft\base\Plugin
 {
     public $hasCpSettings = true;
+    public $hasCpSection = true;
     public $schemaVersion = '1.0.1';
 
     public function init()
@@ -16,6 +20,15 @@ class Plugin extends \craft\base\Plugin
         $this->setComponents([
             'xml' => \fostercommerce\shipstationconnect\services\Xml::class,
         ]);
+
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_CP_URL_RULES,
+            function (RegisterUrlRulesEvent $event) {
+                $event->rules['shipstationconnect/settings'] = 'shipstationconnect/settings/index';
+                $event->rules['shipstationconnect/settings/save'] = 'shipstationconnect/settings/save';
+            }
+        );
     }
 
     protected function beforeInstall(): bool
@@ -37,6 +50,18 @@ class Plugin extends \craft\base\Plugin
         }
 
         return true;
+    }
+
+    public function getCpNavItem()
+    {
+        $item = parent::getCpNavItem();
+
+        $item['label'] = Craft::t('shipstationconnect', 'ShipStation Connect');
+        $item['subnav'] = [
+            'open' => ['label' => Craft::t('shipstationconnect', 'Dashboard'), 'url' => 'shipstationconnect/open'],
+            'settings' => ['label' => Craft::t('shipstationconnect', 'Settings'), 'url' => 'shipstationconnect/settings'],
+        ];
+        return $item;
     }
 
     protected function createSettingsModel()
