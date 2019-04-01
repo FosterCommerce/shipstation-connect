@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.11 - 2019-04-01
+
+### Removed
+
+- Removed automatic linking of matrix field to Orders fields
+
 ## 1.0.10 - 2018-10-25
 
 ### Added

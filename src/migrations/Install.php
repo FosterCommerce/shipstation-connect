@@ -97,40 +97,6 @@ class Install extends Migration
             ));
             return;
         }
-
-        // Add to Orders FieldLayout
-        $commerceOrderSettings = CommercePlugin::getInstance()->orderSettings;
-        $orderSettings = $commerceOrderSettings->getOrderSettingByHandle('order');
-        if ($orderSettings) {
-            $fieldLayout = $orderSettings->getFieldLayout();
-
-            $currentTabs = $fieldLayout->getTabs();
-
-            $tabName = Plugin::getInstance()->name;
-
-            $tabs = array_filter($currentTabs, function ($tab) use ($tabName) {
-                return strtolower($tab->name) === strtolower($tabName);
-            });
-            $tab = array_shift($tabs);
-
-            if (!$tab) {
-                $tab = new FieldLayoutTab([
-                    'name' => $tabName,
-                    'sortOrder' => count($currentTabs),
-                    'fields' => [
-                        $matrix,
-                    ]
-                ]);
-
-                array_push($currentTabs, $tab);
-                $fieldLayout->setTabs($currentTabs);
-
-                $fieldService->saveLayout($fieldLayout);
-
-                $orderSettings->fieldLayoutId = $fieldLayout->id;
-                $commerceOrderSettings->saveOrderSetting($orderSettings);
-            }
-        }
     }
 
     public function safeDown()
