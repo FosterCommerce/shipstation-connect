@@ -1,0 +1,130 @@
+{
+	"info": {
+		"name": "ShipStation Connect",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Export",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{host}}/actions/shipstationconnect/orders/process?action=export&start_date&end_date",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"actions",
+						"shipstationconnect",
+						"orders",
+						"process"
+					],
+					"query": [
+						{
+							"key": "action",
+							"value": "export",
+							"description": "Export orders to XML"
+						},
+						{
+							"key": "start_date",
+							"value": null,
+							"description": "Orders from this date"
+						},
+						{
+							"key": "end_date",
+							"value": null,
+							"description": "Orders until this date"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Ship Notify",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{host}}/actions/shipstationconnect/orders/process?action=shipnotify&order_number=&carrier=&service=&tracking_number=",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"actions",
+						"shipstationconnect",
+						"orders",
+						"process"
+					],
+					"query": [
+						{
+							"key": "action",
+							"value": "shipnotify",
+							"description": "Notify Commerce that an order has shipping info"
+						},
+						{
+							"key": "order_number",
+							"value": "",
+							"description": "Order number of order to update"
+						},
+						{
+							"key": "carrier",
+							"value": "",
+							"description": "Shipping carrier"
+						},
+						{
+							"key": "service",
+							"value": "",
+							"description": "Shipping service"
+						},
+						{
+							"key": "tracking_number",
+							"value": "",
+							"description": "Tracking number"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
