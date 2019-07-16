@@ -498,7 +498,7 @@ class Xml extends Component
         if ($new_child !== null) {
 			$node = dom_import_simplexml($new_child);
 			if (gettype($value) == 'array'){
-				$value = json_encode($value);
+				$value = '';//json_encode($value);
 			}
             $node->appendChild($node->ownerDocument->createCDATASection($value));
         }
