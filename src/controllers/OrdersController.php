@@ -99,7 +99,7 @@ class OrdersController extends Controller
         $end_date = $this->parseDate('end_date');
 
         if ($start_date && $end_date) {
-            $query->dateOrdered(array('and', '> '.$start_date, '< '.$end_date));
+            $query->dateUpdated(array('and', '> '.$start_date, '< '.$end_date));
         }
 
         $query->isCompleted(true);
