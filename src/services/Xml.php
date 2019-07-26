@@ -2,15 +2,19 @@
 namespace fostercommerce\shipstationconnect\services;
 
 use fostercommerce\shipstationconnect\Plugin;
+use fostercommerce\shipstationconnect\events\OrderFieldEvent;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
 use craft\commerce\models\LineItem;
 use craft\commerce\models\Customer;
 use craft\commerce\models\Address;
 use yii\base\Component;
+use yii\base\Event;
 
 class Xml extends Component
 {
+    const ORDER_FIELD_EVENT = 'orderFieldEvent';
+
     public function shouldInclude($order)
     {
         return $order->getShippingAddress() && $order->getBillingAddress();
@@ -198,8 +202,8 @@ class Xml extends Component
 
         $item_xml->addChild('WeightUnits', $ss_weight_units);
 
-        if (isset($item->snapshot['options'])) {
-            $option_xml = $this->options($item_xml, $item->snapshot['options']);
+        if (isset($item->options)) {
+            $option_xml = $this->options($item_xml, $item->options);
         }
 
         return $item_xml;
@@ -385,25 +389,30 @@ class Xml extends Component
     public function customOrderFields(\SimpleXMLElement $order_xml, Order $order)
     {
         $customFields = [
-            'CustomField1',
-            'CustomField2',
-            'CustomField3',
-            'InternalNotes',
-            'CustomerNotes',
-            'Gift',
-            'GiftMessage'
+            OrderFieldEvent::FIELD_CUSTOM_FIELD_1,
+            OrderFieldEvent::FIELD_CUSTOM_FIELD_2,
+            OrderFieldEvent::FIELD_CUSTOM_FIELD_3,
+            OrderFieldEvent::FIELD_INTERNAL_NOTES,
+            OrderFieldEvent::FIELD_CUSTOMER_NOTES,
+            OrderFieldEvent::FIELD_GIFT,
+            OrderFieldEvent::FIELD_GIFT_MESSAGE,
         ];
-        // TODO:
-        // foreach ($customFields as $fieldName) {
-        //     if ($customFieldCallbacks = craft()->plugins->call("shipStationConnect{$fieldName}")) {
-        //         foreach ($customFieldCallbacks as $callback) {
-        //             if (is_callable($callback)) {
-        //                 $value = $callback($order);
-        //                 $order_xml->addChild($fieldName, substr(htmlspecialchars($value), 0, 100));
-        //             }
-        //         }
-        //     }
-        // }
+
+        foreach ($customFields as $fieldName) {
+            $orderFieldEvent = new OrderFieldEvent([
+                'field' => $fieldName,
+                'order' => $order,
+            ]);
+
+            Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
+            $data = $orderFieldEvent->data ?: '';
+            if ($orderFieldEvent->cdata) {
+                $this->addChildWithCDATA($order_xml, $fieldName, substr(htmlspecialchars($data), 0, 100));
+            } else {
+                $order_xml->addChild($fieldName, substr(htmlspecialchars($data), 0, 100));
+            }
+        }
+
         return $order_xml;
     }
 

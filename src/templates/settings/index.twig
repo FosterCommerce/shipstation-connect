@@ -39,10 +39,6 @@
       </p>
   </div>
 
-  <hr />
-
-  <h3>Settings</h3>
-
   {{ forms.textField({
       label: 'Username'|t('shipstationconnect'),
       instructions: 'The username associated with your custom store, not your Craft nor ShipStation usernames.'|t('shipstationconnect'),
@@ -106,4 +102,59 @@
           <pre><code>{{ siteUrl }}actions/shipstationconnect/orders/process</code></pre>
       </div>
   </div>
+
+  <h2>Shipping Info Matrix Field</h2>
+
+  {% set fields = craft.app.fields.allFields %}
+  {% set fields = fields|filter(f => is_matrix(f))|map(f => { label: f.name, value: f.handle }) %}
+
+  {% if fields|length == 0 or settings.matrixFieldHandle is null or settings.matrixFieldHandle|length == 0 %}
+  <div class="error">
+    A matrix field with a block type and the following fields is required:
+    <ul style="list-style:inherit">
+      <li>Carrier text field</li>
+      <li>Service text field</li>
+      <li>Tracking number text field</li>
+    </ul>
+  </div>
+  {% endif %}
+
+  {{ forms.selectField({
+      label: "Matrix Field Handle"|t('app'),
+      name: 'settings[matrixFieldHandle]',
+      value: settings.matrixFieldHandle,
+      options: fields
+  }) }}
+
+  {{ forms.textField({
+      label: 'Block Type Handle'|t('shipstationconnect'),
+      instructions: ''|t('shipstationconnect'),
+      name: 'settings[blockTypeHandle]',
+      value: settings.blockTypeHandle,
+      errors: settings.getErrors('blockTypeHandle'),
+  }) }}
+
+  {{ forms.textField({
+      label: 'Carrier Field Handle'|t('shipstationconnect'),
+      instructions: ''|t('shipstationconnect'),
+      name: 'settings[carrierFieldHandle]',
+      value: settings.carrierFieldHandle,
+      errors: settings.getErrors('carrierFieldHandle'),
+  }) }}
+
+  {{ forms.textField({
+      label: 'Service Field Handle'|t('shipstationconnect'),
+      instructions: ''|t('shipstationconnect'),
+      name: 'settings[serviceFieldHandle]',
+      value: settings.serviceFieldHandle,
+      errors: settings.getErrors('serviceFieldHandle'),
+  }) }}
+
+  {{ forms.textField({
+      label: 'Tracking Number Field Handle'|t('shipstationconnect'),
+      instructions: ''|t('shipstationconnect'),
+      name: 'settings[trackingNumberFieldHandle]',
+      value: settings.trackingNumberFieldHandle,
+      errors: settings.getErrors('trackingNumberFieldHandle'),
+  }) }}
 {% endset %}

@@ -10,4 +10,9 @@ class Settings extends Model
     public $shipstationPassword = '';
     public $ordersPageSize = 25;
     public $orderIdPrefix = '';
+    public $matrixFieldHandle = 'shippingInfo';
+    public $blockTypeHandle = 'shippingInfo';
+    public $carrierFieldHandle = 'carrier';
+    public $serviceFieldHandle = 'service';
+    public $trackingNumberFieldHandle = 'trackingNumber';
 }

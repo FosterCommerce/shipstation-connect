@@ -6,6 +6,9 @@ use craft\web\Controller;
 use craft\elements\MatrixBlock;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
+use craft\db\Query;
+use craft\db\Table;
+use craft\models\MatrixBlockType;
 use yii\web\HttpException;
 use yii\base\ErrorException;
 use fostercommerce\shipstationconnect\Plugin;
@@ -99,11 +102,11 @@ class OrdersController extends Controller
         $end_date = $this->parseDate('end_date');
 
         if ($start_date && $end_date) {
-            $query->dateOrdered(array('and', '> '.$start_date, '< '.$end_date));
+            $query->dateUpdated(array('and', '> '.$start_date, '< '.$end_date));
         }
 
         $query->isCompleted(true);
-        $query->orderBy('dateOrdered asc');
+        $query->orderBy('dateUpdated asc');
 
         $num_pages = $this->paginateOrders($query);
 
@@ -162,6 +165,31 @@ class OrdersController extends Controller
         return null;
     }
 
+    private function getBlockTypeByHandle($fieldId, $handle)
+    {
+        $result = (new Query())
+            ->select([
+                'id',
+                'fieldId',
+                'fieldLayoutId',
+                'name',
+                'handle',
+                'sortOrder',
+                'uid'
+            ])
+            ->from([Table::MATRIXBLOCKTYPES])
+            ->where(['fieldId' => $fieldId])
+            ->andWhere(['handle' => $handle])
+            ->orderBy(['sortOrder' => SORT_ASC])
+            ->one();
+
+        if ($result) {
+            return new MatrixBlockType($result);
+        }
+
+        return null;
+    }
+
     /**
      * Updates order status for a given order. This is called by ShipStation.
      * The order is found using the query param `order_number`.
@@ -185,11 +213,12 @@ class OrdersController extends Controller
         $order->message = 'Marking order as shipped. Adding shipping information.';
         $shippingInformation = $this->getShippingInformationFromParams();
 
-        $matrix = Craft::$app->fields->getFieldByHandle('shippingInfo');
+        $settings = Plugin::getInstance()->settings;
+        $matrix = Craft::$app->fields->getFieldByHandle($settings->matrixFieldHandle);
 
+        // If the field exists
         if ($matrix) {
-            $blockTypes = Craft::$app->matrix->getBlockTypesByFieldId($matrix->id);
-            $blockType = array_shift($blockTypes);
+            $blockType = $this->getBlockTypeByHandle($matrix->id, $settings->blockTypeHandle);
 
             if ($blockType && $order && $this->validateShippingInformation($shippingInformation)) {
                 $block = new MatrixBlock([
@@ -197,9 +226,9 @@ class OrdersController extends Controller
                     'fieldId' => $matrix->id,
                     'typeId' => $blockType->id,
                 ]);
-                $block->setFieldValue('carrier', $shippingInformation['carrier']);
-                $block->setFieldValue('service', $shippingInformation['service']);
-                $block->setFieldValue('tracking', $shippingInformation['trackingNumber']);
+                $block->setFieldValue($settings->carrierFieldHandle, $shippingInformation['carrier']);
+                $block->setFieldValue($settings->serviceFieldHandle, $shippingInformation['service']);
+                $block->setFieldValue($settings->trackingNumberFieldHandle, $shippingInformation['trackingNumber']);
 
                 if (!Craft::$app->elements->saveElement($block)) {
                     Craft::warning(

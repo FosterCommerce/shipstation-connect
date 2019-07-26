@@ -55,6 +55,45 @@ ShipStation Connect will create a new Matrix field called "Shipping Info" under 
 
 When a shipping notification is received for an order from ShipStation, the plugin will add the shipping information to the Shipping Information field on the order and set the order status to Shipped.
 
+## Custom Fields
+
+Add information to the following fields defined by ShipStation:
+
+- CustomField1
+- CustomField2
+- CustomField3
+- InternalNotes
+- CustomerNotes
+- Gift
+- GiftMessage
+
+Use the `OrderFieldEvent` to set the values per field:
+
+```php
+Event::on(
+    Xml::class,
+    Xml::ORDER_FIELD_EVENT,
+    function (OrderFieldEvent $e) {
+        $fieldName = $e->field;
+        $order = $e->order;
+
+        if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
+            $e->data = "GIFT FIELD";
+            $e->cdata = false;
+        } else {
+            $e->data = 'OTHER FIELD';
+        }
+    }
+);
+```
+
+`OrderFieldEvent` properties:
+
+- `field` - The custom field name.
+- `order` - Current order data.
+- `data` - The data to set on this field.
+- `cdata` - Whether or not to wrap the value in a CDATA block.
+
 ## Template Examples
 
 Coming soon

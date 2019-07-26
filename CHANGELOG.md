@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0 - 2019-07-26
+
+### Added
+
+- `OrderFieldEvent` event for setting values of custom fields.
+- Settings to specify which matrix field to use for setting order tracking information.
+
+### Updated
+
+- Filter orders by date modified according to the ShipStation docs.
+
+### Removed
+
+- Field creation migrations - These need to be handled by the user manually now.
+
 ## 1.0.11 - 2019-04-01
 
 ### Removed
