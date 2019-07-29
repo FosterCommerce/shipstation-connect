@@ -406,10 +406,17 @@ class Xml extends Component
 
             Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
             $data = $orderFieldEvent->data ?: '';
-            if ($orderFieldEvent->cdata) {
-                $this->addChildWithCDATA($order_xml, $fieldName, substr(htmlspecialchars($data), 0, 100));
+
+            // Gift field requires a boolean value
+            if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
+                $data = $data ? 'true' : 'false';
+                $order_xml->addChild($fieldName, $data);
             } else {
-                $order_xml->addChild($fieldName, substr(htmlspecialchars($data), 0, 100));
+                if ($orderFieldEvent->cdata) {
+                    $this->addChildWithCDATA($order_xml, $fieldName, substr(htmlspecialchars($data), 0, 100));
+                } else {
+                    $order_xml->addChild($fieldName, substr(htmlspecialchars($data), 0, 100));
+                }
             }
         }
 
