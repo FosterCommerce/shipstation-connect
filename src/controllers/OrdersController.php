@@ -69,7 +69,10 @@ class OrdersController extends Controller
             Craft::t('shipstationconnect', $msg, $params),
             __METHOD__
         );
-        Craft::$app->getErrorHandler()->logException($e);
+
+        if ($e) {
+            Craft::$app->getErrorHandler()->logException($e);
+        }
     }
 
     /**
