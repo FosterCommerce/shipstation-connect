@@ -29,7 +29,7 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess()
+    public function actionProcess($store = null, $action = null)
     {
         $request = Craft::$app->request;
         try {
@@ -37,33 +37,33 @@ class OrdersController extends Controller
                 throw new HttpException(401, 'Invalid ShipStation username or password.');
             }
 
-            switch ($request->getParam('action')) {
+            switch ($action) {
                 case 'export':
-                    return $this->getOrders();
+                    return $this->getOrders($store);
                 case 'shipnotify':
                     return $this->postShipment();
                 default:
                     throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
             }
         } catch (ErrorException $e) {
-            $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
+            $this->logException('Error processing action {action}', ['action' => $action], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         } catch (HttpException $e) {
-            $action = $request->getParam('action');
+            $action = $action;
             if ($action) {
-                $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
+                $this->logException('Error processing action {action}', ['action' => $action], $e);
             } else {
                 $this->logException('An action is required. Supported actions: export, shipnotify.');
             }
 
             return $this->asErrorJson($e->getMessage())->setStatusCode($e->statusCode);
         } catch (\Exception $e) {
-            $this->logException('Error processing action {action}', ['action' => $request->getParam('action')], $e);
+            $this->logException('Error processing action {action}', ['action' => $action], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         }
     }
 
-    private function logException($msg, $params, $e)
+    private function logException($msg, $params = [], $e = null)
     {
         Craft::error(
             Craft::t('shipstationconnect', $msg, $params),
@@ -94,7 +94,7 @@ class OrdersController extends Controller
      *
      * @return SimpleXMLElement Orders XML
      */
-    protected function getOrders()
+    protected function getOrders($store = null)
     {
         $query = Order::find();
 
@@ -106,6 +106,12 @@ class OrdersController extends Controller
         }
 
         $query->isCompleted(true);
+
+        $storeFieldHandle = Plugin::getInstance()->settings->storesFieldHandle;
+        if ($store !== null || $storeFieldHandle !== '') {
+            $query->search("${storeFieldHandle}:${store}");
+        }
+
         $query->orderBy('dateUpdated asc');
 
         $num_pages = $this->paginateOrders($query);

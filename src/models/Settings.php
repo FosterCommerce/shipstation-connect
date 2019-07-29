@@ -6,6 +6,7 @@ use craft\base\Model;
 
 class Settings extends Model
 {
+    public $storesFieldHandle = '';
     public $shipstationUsername = '';
     public $shipstationPassword = '';
     public $ordersPageSize = 25;

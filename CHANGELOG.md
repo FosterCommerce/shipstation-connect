@@ -6,6 +6,7 @@
 
 - `OrderFieldEvent` event for setting values of custom fields.
 - Settings to specify which matrix field to use for setting order tracking information.
+- Multiple store configuration
 
 ### Updated
 

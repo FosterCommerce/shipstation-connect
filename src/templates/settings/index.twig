@@ -15,7 +15,7 @@
   <input type="hidden" name="action" value="shipstationconnect/settings/save">
   {{ redirectInput('shipstationconnect/settings') }}
   <div>
-      <h4>Custom Store</h4>
+      <h3>Custom Store</h3>
       <p>
           ShipStation's custom store integration works by requesting orders from ShipStation Connect (shipped and unshipped),
           and then by notifying ShipStation Connect when an order has been shipped.
@@ -31,13 +31,57 @@
           <li>Order Statuses (optional)</li>
       </ul>
 
-      <h4>Order Statuses</h4>
+      <h3>Order Statuses</h3>
       <p>
           If you have defined custom order statuses, you will need to define them in ShipStation accordingly.
           By default, Craft Commerce uses "processing" for "Awaiting Shipment Statuses" in ShipStation, and "shipped" for "Shipped Statuses".
           Other ShipStation statuses can be left as is, as Commerce doesn't have any corresponding statuses. See below for the statuses currently enabled.
       </p>
   </div>
+  {% set fields = craft.app.fields.allFields %}
+  {% set storeFields = fields|filter(f => is_dropdown(f))|map(f => { label: f.name, value: f.handle }) %}
+  {% set storeFields = [{ label: 'Default', value: '' }]|merge(storeFields) %}
+
+  {{ forms.selectField({
+      label: "Select ShipStation Store field"|t('shipstationconnect'),
+      instructions: 'If you have multiple stores, you can add a dropdown field to your Orders to specify which store that order belongs to.'|t('shipstationstore'),
+      name: 'settings[storesFieldHandle]',
+      value: settings.storesFieldHandle,
+      options: storeFields
+  }) }}
+
+
+  {% set storeField = craft.app.fields.fieldByHandle(settings.storesFieldHandle) %}
+  {% if storeField is not null %}
+    <div class="field">
+      <div class="heading">
+          <label>Custom XML Page URLs</label>
+          <div class="instructions">
+              <p>When setting up your ShipStation Custom Store, enter these URL's for the relevant store</p>
+          </div>
+      </div>
+      <ul style="margin-left: 2em;">
+        {% for fieldOption in storeField.options %}
+          <li>
+            <span style="font-weight: bold">{{ fieldOption.label }}</span>
+            <pre><code>{{ siteUrl }}actions/shipstationconnect/orders/process?store={{ fieldOption.value }}</code></pre>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+      <div class="field">
+        <div class="heading">
+            <label>Custom XML Page URL</label>
+            <div class="instructions">
+                <p>When setting up your ShipStation Custom Store, enter this URL so ShipStation can retrieve and update orders.</p>
+            </div>
+        </div>
+        <div class="input" style="margin-left: 2em;">
+          <pre><code>{{ siteUrl }}actions/shipstationconnect/orders/process</code></pre>
+        </div>
+      </div>
+  {% endif %}
 
   {{ forms.textField({
       label: 'Username'|t('shipstationconnect'),
@@ -90,19 +134,6 @@
       </ul>
   </div>
 
-  <div class="field">
-      <div class="heading">
-          <label>XML Page URL</label>
-          <div class="instructions">
-              <p>When setting up your ShipStation Custom Store, enter this URL so ShipStation can retrieve and update orders.</p>
-          </div>
-      </div>
-      <div class="input">
-          <br />
-          <pre><code>{{ siteUrl }}actions/shipstationconnect/orders/process</code></pre>
-      </div>
-  </div>
-
   <h2>Shipping Info Matrix Field</h2>
 
   {% set fields = craft.app.fields.allFields %}
@@ -120,7 +151,7 @@
   {% endif %}
 
   {{ forms.selectField({
-      label: "Matrix Field Handle"|t('app'),
+      label: "Matrix Field Handle"|t('shipstationconnect'),
       name: 'settings[matrixFieldHandle]',
       value: settings.matrixFieldHandle,
       options: fields
