@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 - 2019-08-12
+
+### Added
+
+- Event to override default OrderNumber field
+- Event to override default ShippingMethod field
+
+### Updated
+
+- Default OrderNumber field to `"reference"`
+
 ## 1.1.0 - 2019-07-26
 
 ### Added

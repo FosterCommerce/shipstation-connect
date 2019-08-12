@@ -58,13 +58,27 @@ class Xml extends Component
                     $settings =  Plugin::getInstance()->settings;
                     $prefix = $settings->orderIdPrefix;
                     return $prefix . $order->id;
-                }
+                },
+                'cdata' => false,
             ],
-            'OrderNumber' => 'number',
+            'OrderNumber' => [
+                'callback' => function ($order) {
+                    $orderFieldEvent = new OrderFieldEvent([
+                        'field' => OrderFieldEvent::FIELD_ORDER_NUMBER,
+                        'order' => $order,
+                        'data' => $order->reference,
+                    ]);
+
+                    Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
+                    return $orderFieldEvent->data;
+                },
+                'cdata' => false,
+            ],
             'OrderStatus' => [
                 'callback' => function ($order) {
                     return $order->getOrderStatus()->handle;
-                }
+                },
+                'cdata' => false,
             ],
             'OrderTotal' => [
                 'callback' => function ($order) {
@@ -122,9 +136,17 @@ class Xml extends Component
      */
     public function shippingMethod(\SimpleXMLElement $order_xml, $order)
     {
-        if ($shippingMethod = $order->getShippingMethod()) {
-            $this->addChildWithCDATA($order_xml, 'ShippingMethod', $shippingMethod->handle);
+        $orderFieldEvent = new OrderFieldEvent([
+            'field' => OrderFieldEvent::FIELD_SHIPPING_METHOD,
+            'order' => $order,
+        ]);
+        Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
+
+        if (!$orderFieldEvent->data && $shippingMethod = $order->getShippingMethod()) {
+            $orderFieldEvent->data = $shippingMethod->handle;
         }
+
+        $this->addChildWithCDATA($order_xml, 'ShippingMethod', $orderFieldEvent->data);
     }
 
     /**
