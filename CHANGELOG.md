@@ -1,27 +1,19 @@
 # Changelog
 
-## 1.2.0 - 2019-08-12
-
-### Added
-
-- Event to override default OrderNumber field
-- Event to override default ShippingMethod field
-
-### Updated
-
-- Default OrderNumber field to `"reference"`
-
-## 1.1.0 - 2019-07-26
+## 1.1.0 - 2019-08-12
 
 ### Added
 
 - `OrderFieldEvent` event for setting values of custom fields.
 - Settings to specify which matrix field to use for setting order tracking information.
 - Multiple store configuration
+- Event to override default OrderNumber field
+- Event to override default ShippingMethod field
 
 ### Updated
 
 - Filter orders by date modified according to the ShipStation docs.
+- Default OrderNumber field to `"reference"`
 
 ### Removed
 
