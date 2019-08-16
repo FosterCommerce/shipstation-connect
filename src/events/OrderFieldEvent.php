@@ -17,7 +17,7 @@ class OrderFieldEvent extends Event
 
     public $field;
     public $order;
-    public $data = null;
+    public $value;
     public $cdata = true;
 }
 

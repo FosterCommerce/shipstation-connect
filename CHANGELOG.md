@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 - 2019-08-16
+
+### Updated
+
+- `OrderFieldEvent::data` to `OrderFieldEvent::value` because `data` is already defined in the parent class.
+
 ## 1.1.0 - 2019-08-12
 
 ### Added

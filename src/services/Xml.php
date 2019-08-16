@@ -66,11 +66,11 @@ class Xml extends Component
                     $orderFieldEvent = new OrderFieldEvent([
                         'field' => OrderFieldEvent::FIELD_ORDER_NUMBER,
                         'order' => $order,
-                        'data' => $order->reference,
+                        'value' => $order->reference,
                     ]);
 
                     Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
-                    return $orderFieldEvent->data;
+                    return $orderFieldEvent->value;
                 },
                 'cdata' => false,
             ],
@@ -142,11 +142,11 @@ class Xml extends Component
         ]);
         Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
 
-        if (!$orderFieldEvent->data && $shippingMethod = $order->getShippingMethod()) {
-            $orderFieldEvent->data = $shippingMethod->handle;
+        if (!$orderFieldEvent->value && $shippingMethod = $order->getShippingMethod()) {
+            $orderFieldEvent->value = $shippingMethod->handle;
         }
 
-        $this->addChildWithCDATA($order_xml, 'ShippingMethod', $orderFieldEvent->data);
+        $this->addChildWithCDATA($order_xml, 'ShippingMethod', $orderFieldEvent->value);
     }
 
     /**
@@ -427,7 +427,7 @@ class Xml extends Component
             ]);
 
             Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
-            $data = $orderFieldEvent->data ?: '';
+            $data = $orderFieldEvent->value ?: '';
 
             // Gift field requires a boolean value
             if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
