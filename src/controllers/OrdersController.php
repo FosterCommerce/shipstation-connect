@@ -11,10 +11,13 @@ use craft\db\Table;
 use craft\models\MatrixBlockType;
 use yii\web\HttpException;
 use yii\base\ErrorException;
+use yii\base\Event;
 use fostercommerce\shipstationconnect\Plugin;
+use fostercommerce\shipstationconnect\events\FindOrderEvent;
 
 class OrdersController extends Controller
 {
+    const FIND_ORDER_EVENT = 'findOrderEvent';
 
     // Disable CSRF validation for the entire controller
     public $enableCsrfValidation = false;
@@ -309,11 +312,20 @@ class OrdersController extends Controller
     protected function orderFromParams()
     {
         $request = Craft::$app->getRequest();
-        if ($order_number = $request->getParam('order_number')) {
-            if ($order = CommercePlugin::getInstance()->orders->getOrderByNumber($order_number)) {
-                return $order;
+        if ($orderNumber = $request->getParam('order_number')) {
+            $findOrderEvent = new FindOrderEvent(['orderNumber' => $orderNumber]);
+            Event::trigger(static::class, self::FIND_ORDER_EVENT, $findOrderEvent);
+
+            $order = $findOrderEvent->order;
+            if (!$order) {
+                if ($order = Order::find()->reference($orderNumber)->one()) {
+                    return $order;
+                }
+
+                throw new HttpException(404, "Order with number '{$orderNumber}' not found");
             }
-            throw new HttpException(404, "Order with number '{$order_number}' not found");
+
+            return $order;
         }
         throw new HttpException(406, 'Order number must be set');
     }

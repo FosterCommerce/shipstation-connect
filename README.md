@@ -59,6 +59,8 @@ When a shipping notification is received for an order from ShipStation, the plug
 
 Add information to the following fields defined by ShipStation:
 
+- OrderNumber
+- ShippingMethod
 - CustomField1
 - CustomField2
 - CustomField3
@@ -93,6 +95,25 @@ Event::on(
 - `order` - Current order data.
 - `data` - The data to set on this field.
 - `cdata` - Whether or not to wrap the value in a CDATA block.
+
+If you've changed the `OrderNumber` field to be anything other than the order's reference number, you'll need to listen to the `OrdersController::FIND_ORDER_EVENT` to use your own query to fetch the order. For example, if you're using the order's ID as the OrderNumber for ShipStation, you can fetch the order by ID:
+
+```php
+Event::on(
+    OrdersController::class,
+    OrdersController::FIND_ORDER_EVENT,
+    function (FindOrderEvent $e) {
+        if ($order = Order::find()->id($e->order_number)->one()) {
+            $e->order = $order;
+        }
+    }
+);
+```
+
+`FindOrderEvent` properties:
+
+- `orderNumber` - The order number sent by ShipStation.
+- `order` - The order which will be updated with shipping information.
 
 ## Template Examples
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 - 2019-08-23
+
+### Added
+
+- `FindOrderEvent` to allow users to implement custom logic to find an order
+
 ## 1.2.0 - 2019-08-16
 
 ### Updated
