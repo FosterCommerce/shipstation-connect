@@ -115,7 +115,7 @@ class OrdersController extends Controller
 
         $storeFieldHandle = Plugin::getInstance()->settings->storesFieldHandle;
         if ($store !== null || $storeFieldHandle !== '') {
-            $query->search("${storeFieldHandle}:${store}");
+            $query->andWhere(["field_${storeFieldHandle}" => $store]);
         }
 
         $query->orderBy('dateUpdated asc');

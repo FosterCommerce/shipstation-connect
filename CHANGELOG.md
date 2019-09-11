@@ -1,10 +1,20 @@
 # Changelog
 
+## 1.2.2 - 2019-09-11
+
+## Updated
+
+- Order filter by subscription store to filter on the column directly instead of relying on the search index.
+
+## Removed
+
+- Untracked `composer.lock`.
+
 ## 1.2.1 - 2019-08-23
 
 ### Added
 
-- `FindOrderEvent` to allow users to implement custom logic to find an order
+- `FindOrderEvent` to allow users to implement custom logic to find an order.
 
 ## 1.2.0 - 2019-08-16
 
