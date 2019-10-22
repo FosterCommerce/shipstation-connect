@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3 - 2019-10-22
+
+## Added
+
+- Option to use shipping address for billing address when billing information is missing.
+
 ## 1.2.2 - 2019-09-11
 
 ## Updated

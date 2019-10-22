@@ -16,4 +16,5 @@ class Settings extends Model
     public $carrierFieldHandle = 'carrier';
     public $serviceFieldHandle = 'service';
     public $trackingNumberFieldHandle = 'trackingNumber';
+    public $billingSameAsShipping = false;
 }

@@ -188,4 +188,13 @@
       value: settings.trackingNumberFieldHandle,
       errors: settings.getErrors('trackingNumberFieldHandle'),
   }) }}
+
+  {{ forms.lightSwitchField({
+      label: "Billing address same as shipping address"|t('shipstationconnect'),
+      instructions: "When billing address is missing, use the shipping address instead"|t('shipstationconnect'),
+      name: 'settings[billingSameAsShipping]',
+      on: settings.billingSameAsShipping,
+      checked: settings.billingSameAsShipping,
+      errors: settings.getErrors('billingSameAsShipping')
+  }) }}
 {% endset %}

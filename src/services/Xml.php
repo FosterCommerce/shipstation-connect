@@ -17,7 +17,9 @@ class Xml extends Component
 
     public function shouldInclude($order)
     {
-        return $order->getShippingAddress() && $order->getBillingAddress();
+        $settings = Plugin::getInstance()->settings;
+        $billingSameAsShipping = $settings->billingSameAsShipping;
+        return $order->getShippingAddress() && ($billingSameAsShipping || $order->getBillingAddress());
     }
 
     /**
@@ -328,7 +330,16 @@ class Xml extends Component
      */
     public function billTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer)
     {
-        if ($billingAddress = $order->getBillingAddress()) {
+        $billingAddress = $order->getBillingAddress();
+        if (!$billingAddress) {
+            $settings = Plugin::getInstance()->settings;
+            $billingSameAsShipping = $settings->billingSameAsShipping;
+            if ($billingSameAsShipping) {
+                $billingAddress = $order->getShippingAddress();
+            }
+        }
+
+        if ($billingAddress) {
             $billTo_xml = $this->address($customer_xml, $billingAddress, 'BillTo');
             if ($billingAddress->firstName && $billingAddress->lastName) {
                 $name = "{$billingAddress->firstName} {$billingAddress->lastName}";
