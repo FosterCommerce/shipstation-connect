@@ -2,17 +2,17 @@
 
 ## 1.2.3 - 2019-10-22
 
-## Added
+### Added
 
 - Option to use shipping address for billing address when billing information is missing.
 
 ## 1.2.2 - 2019-09-11
 
-## Updated
+### Updated
 
 - Order filter by subscription store to filter on the column directly instead of relying on the search index.
 
-## Removed
+### Removed
 
 - Untracked `composer.lock`.
 
