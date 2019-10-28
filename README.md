@@ -29,11 +29,11 @@ composer require fostercommerce/shipstationconnect
 ./craft install/plugin shipstationconnect
 ```
 
-After installing with composer, go to the Craft control panel plugin settings page to install and configure the settings for the plugin.
+After installing, go to the Craft control panel plugin settings page to configure the settings for the plugin.
 
 ## Custom Store Configuration
 
-Configure your connection in ShipStation following these instructions: [ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/205928478-ShipStation-Custom-Store-Development-Guide#3a).
+Configure your connection in ShipStation following these instructions: [ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/360025856192-Custom-Store-Development-Guide#UUID-685007d9-4cda-06f2-d2f6-011ab46805af_UUID-001f552d-4260-aeb0-8a23-0f6ff166e045).
 
 ### Connect Your Craft Store to ShipStation
 
@@ -43,7 +43,10 @@ The "URL to Custom XML Page" is shown in the ShipStation Connect settings view i
 
 ShipStation allows you to set a custom username and password combination for a connected store. This combination should match the values stored in the ShipStation Connnect settings view in your Craft control panel.
 
-**Note:** These values are *not* your ShipStation credentials, nor your Craft user credentials.
+**Note:** These are *not* your ShipStation credentials, nor your Craft user credentials.
+
+As of version 1.2.4, these values can be set with environment variables.
+![Username/Password variables](screenshots/username-password-env-values.png)
 
 ### Order Statuses
 
@@ -63,11 +66,10 @@ The matrix field should have a block type with text fields for the following:
 
 ![Matrix Field configuration](screenshots/matrix_field.png)
 
-In ShipStation Connnect settings, select the matrix field, and enter the handles for the block type and text fields.
+In the ShipStation Connnect settings, select the matrix field, and enter the handles for the block type and text fields.
+![Shipping Info Matrix Field](screenshots/shipping-info-matrix-field.png)
 
-
-
-When a shipping notification is received for an order from ShipStation, the plugin will add the shipping information to the Shipping Information field on the order and set the order status to Shipped.
+When a shipping notification is received for an order from ShipStation, the plugin will add the shipping information to the Shipping Information field on the order and set the order to the Craft status paired with your ShipStation stores Shipped status.
 
 ## Custom Fields
 
