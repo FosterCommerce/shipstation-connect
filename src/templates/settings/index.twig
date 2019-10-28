@@ -50,7 +50,6 @@
       options: storeFields
   }) }}
 
-
   {% set storeField = craft.app.fields.fieldByHandle(settings.storesFieldHandle) %}
   {% if storeField is not null %}
     <div class="field">
@@ -83,16 +82,18 @@
       </div>
   {% endif %}
 
-  {{ forms.textField({
+  {{ forms.autosuggestField({
       label: 'Username'|t('shipstationconnect'),
       instructions: 'The username associated with your custom store, not your Craft nor ShipStation usernames.'|t('shipstationconnect'),
       id: 'shipstation_username',
       name: 'settings[shipstationUsername]',
       value: settings.shipstationUsername,
       errors: settings.getErrors('shipstationUsername'),
+      class: 'ltr',
+      suggestEnvVars: true,
   }) }}
 
-  {{ forms.textField({
+  {{ forms.autosuggestField({
       label: 'Password'|t('shipstationconnect'),
       instructions: 'The password associated with your custom store, not your Craft nor ShipStation passwords.'|t('shipstationconnect'),
       id: 'shipstation_password',
@@ -100,6 +101,8 @@
       name: 'settings[shipstationPassword]',
       value: settings.shipstationPassword,
       errors: settings.getErrors('shipstationPassword'),
+      class: 'ltr',
+      suggestEnvVars: true,
   }) }}
 
   {{ forms.textField({

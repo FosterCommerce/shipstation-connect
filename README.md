@@ -51,7 +51,21 @@ Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit 
 
 ## Commerce Integration
 
-ShipStation Connect will create a new Matrix field called "Shipping Info" under the "ShipStation Connect" Group. It will also automatically add a new tab to the Orders layout in Craft Commerce called "ShipStation Connect" which will include the Shipping Info field.
+### Matrix Field
+
+ShipStation Connect requires a Matrix Field for storing shipping information.
+
+The matrix field should have a block type with text fields for the following:
+
+- Carrier
+- Service
+- Tracking Number
+
+![Matrix Field configuration](screenshots/matrix_field.png)
+
+In ShipStation Connnect settings, select the matrix field, and enter the handles for the block type and text fields.
+
+
 
 When a shipping notification is received for an order from ShipStation, the plugin will add the shipping information to the Shipping Information field on the order and set the order status to Shipped.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4 - 2019-10-28
+
+### Updated
+
+- Username/password fields accept environment variables as values.
+
 ## 1.2.3 - 2019-10-22
 
 ### Added

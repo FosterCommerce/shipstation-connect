@@ -79,15 +79,15 @@ class OrdersController extends Controller
     }
 
     /**
-     * Authenticate the user using HTTP Basic auth. This is NOT using Craft's sessions/authentication.
+     * Authenticate the user using HTTP Basic auth. This is *not* using Craft's sessions/authentication.
      *
      * @return bool, true if successfully authenticated or false otherwise
      */
     protected function authenticate()
     {
         $settings = Plugin::getInstance()->settings;
-        $expectedUsername = $settings->shipstationUsername;
-        $expectedPassword = $settings->shipstationPassword;
+        $expectedUsername = Craft::parseEnv($settings->shipstationUsername);
+        $expectedPassword = Craft::parseEnv($settings->shipstationPassword);
 
         $username = array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : null;
         $password = array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : null;
