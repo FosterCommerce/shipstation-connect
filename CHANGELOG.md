@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.5 - 2019-11-25
+
+### Updated
+
+- Line Item options which are an array or object are serialized to a JSON string.
+- Order Line Item options are now limited to a maximum of 10 per line item. Limit set by ShipStation.
+
 ## 1.2.4 - 2019-10-28
 
 ### Updated

@@ -13,6 +13,7 @@ use yii\base\Event;
 
 class Xml extends Component
 {
+    const LINEITEM_OPTION_LIMIT = 10;
     const ORDER_FIELD_EVENT = 'orderFieldEvent';
 
     public function shouldInclude($order)
@@ -293,10 +294,23 @@ class Xml extends Component
     {
         $options_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
+
+        $index = 0;
         foreach ($options as $key => $value) {
             $option_xml = $options_xml->addChild('Option');
-            $this->addChildWithCDATA($option_xml, 'Name', $key);
+            $option_xml->addChild('Name', $key);
+
+            if (is_array($value) || !is_object($value)) {
+                $value = json_encode($value);
+            }
+
             $this->addChildWithCDATA($option_xml, 'Value', $value);
+
+            // ShipStation limits the number of options on any line item
+            $index++;
+            if ($index === self::LINEITEM_OPTION_LIMIT) {
+                break;
+            }
         }
 
         return $xml;
