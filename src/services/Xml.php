@@ -91,13 +91,13 @@ class Xml extends Component
             ],
             'TaxAmount' => [
                 'callback' => function ($order) {
-                    return $order->getAdjustmentsTotalByType('tax');
+                    return $order->getTotalTax();
                 },
                 'cdata' => false,
             ],
             'ShippingAmount' => [
                 'callback' => function ($order) {
-                    return $order->getAdjustmentsTotalByType('shipping');
+                    return $order->getTotalShippingCost();
                 },
                 'cdata' => false,
             ]
@@ -244,7 +244,7 @@ class Xml extends Component
     public function discount(\SimpleXMLElement $xml, Order $order, $name='Item')
     {
         // If no discount was applied, skip this
-        if ($order->getAdjustmentsTotalByType('discount') >= 0) {
+        if ($order->getTotalDiscount() >= 0) {
             return;
         }
 
@@ -266,7 +266,7 @@ class Xml extends Component
             ],
             'UnitPrice'  => [
                 'callback' => function ($order) {
-                    return number_format($order->getAdjustmentsTotalByType('discount'), 2);
+                    return number_format($order->getTotalDiscount(), 2);
                 },
                 'cdata' => false,
             ],
