@@ -5,6 +5,7 @@
 ## Updated
 
 - Replaced use of deprecated adjustment functions, `getAdjustmentsTotalByType`.
+- Return maximum of 200 characters for the line item `Name` field.
 
 ## 1.2.5 - 2019-11-25
 

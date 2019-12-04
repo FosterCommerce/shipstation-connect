@@ -186,9 +186,15 @@ class Xml extends Component
             'SKU' => [
                 'callback' => function ($item) {
                     return $item->snapshot['sku'];
-                }
+                },
+                'cdata' => false,
             ],
-            'Name' => 'description',
+            'Name' => [
+                'callback' => function ($item) {
+                    return substr($item->description, 0, 200);
+                },
+                'cdata' => false,
+            ],
             'Weight' => [
                 'callback' => function ($item) {
                     $weight_units = CommercePlugin::getInstance()->settings->weightUnits;
