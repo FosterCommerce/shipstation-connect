@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.6 - 2019-12-04
+
+## Updated
+
+- Replaced use of deprecated adjustment functions, `getAdjustmentsTotalByType`.
+
 ## 1.2.5 - 2019-11-25
 
 ### Updated
