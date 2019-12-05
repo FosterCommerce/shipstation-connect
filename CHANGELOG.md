@@ -1,8 +1,14 @@
 # Changelog
 
+## 1.2.7 - 2019-12-05
+
+### Updated
+
+- Add back CDATA sections to item SKU and item name properties.
+
 ## 1.2.6 - 2019-12-04
 
-## Updated
+### Updated
 
 - Replaced use of deprecated adjustment functions, `getAdjustmentsTotalByType`.
 - Return maximum of 200 characters for the line item `Name` field.
