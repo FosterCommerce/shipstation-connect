@@ -100,13 +100,7 @@ class Xml extends Component
                     return $order->getTotalShippingCost();
                 },
                 'cdata' => false,
-            ],
-            'CutomField1' => [
-                'callback' => function ($order) {
-                    return $order->getFieldValue('recurlySubscriptionCoupon');
-                },
-                'cdata' => false,
-            ],
+            ]
         ];
         $this->mapCraftModel($order_xml, $order_mapping, $order);
 
