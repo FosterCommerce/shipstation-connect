@@ -1,10 +1,10 @@
-# ShipStation Connect for Craft CMS 3.x and Commerce 2.x
+# ShipStation Connect for Craft CMS 3 and Commerce 2/3
 
 A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
 ## Requirements
 
-This plugin requires Craft CMS 3.x and Commerce 2.x or later
+This plugin requires Craft CMS 3 and Commerce 2 or later
 
 ## Installation
 
@@ -130,8 +130,4 @@ Event::on(
 
 - `orderNumber` - The order number sent by ShipStation.
 - `order` - The order which will be updated with shipping information.
-
-## Template Examples
-
-Coming soon
 
