@@ -48,6 +48,16 @@ ShipStation allows you to set a custom username and password combination for a c
 As of version 1.2.4, these values can be set with environment variables.
 ![Username/Password variables](screenshots/username-password-env-values.png)
 
+#### Debugging Apache Authentication Errors
+
+> The remote server returned an error
+
+If you are seeing a 400 error (401 or 404 notably) and you're running on Apache. Try adding the following to your apache config.
+
+```
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```
+
 ### Order Statuses
 
 Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit each platform to use custom statuses and ShipStation can match multiple Craft statuses to a single ShipStation status, when needed.
