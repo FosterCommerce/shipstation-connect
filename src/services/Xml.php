@@ -440,16 +440,16 @@ class Xml extends Component
     public function customOrderFields(\SimpleXMLElement $order_xml, Order $order)
     {
         $customFields = [
-            OrderFieldEvent::FIELD_CUSTOM_FIELD_1,
-            OrderFieldEvent::FIELD_CUSTOM_FIELD_2,
-            OrderFieldEvent::FIELD_CUSTOM_FIELD_3,
-            OrderFieldEvent::FIELD_INTERNAL_NOTES,
-            OrderFieldEvent::FIELD_CUSTOMER_NOTES,
-            OrderFieldEvent::FIELD_GIFT,
-            OrderFieldEvent::FIELD_GIFT_MESSAGE,
+            [OrderFieldEvent::FIELD_CUSTOM_FIELD_1, 100],
+            [OrderFieldEvent::FIELD_CUSTOM_FIELD_2, 100],
+            [OrderFieldEvent::FIELD_CUSTOM_FIELD_3, 100],
+            [OrderFieldEvent::FIELD_INTERNAL_NOTES, 1000],
+            [OrderFieldEvent::FIELD_CUSTOMER_NOTES, 1000],
+            [OrderFieldEvent::FIELD_GIFT, 100],
+            [OrderFieldEvent::FIELD_GIFT_MESSAGE, 1000],
         ];
 
-        foreach ($customFields as $fieldName) {
+        foreach ($customFields as list($fieldName, $charLimit)) {
             $orderFieldEvent = new OrderFieldEvent([
                 'field' => $fieldName,
                 'order' => $order,
@@ -464,9 +464,9 @@ class Xml extends Component
                 $order_xml->addChild($fieldName, $data);
             } else {
                 if ($orderFieldEvent->cdata) {
-                    $this->addChildWithCDATA($order_xml, $fieldName, substr(htmlspecialchars($data), 0, 100));
+                    $this->addChildWithCDATA($order_xml, $fieldName, substr(htmlspecialchars($data), 0, $charLimit));
                 } else {
-                    $order_xml->addChild($fieldName, substr(htmlspecialchars($data), 0, 100));
+                    $order_xml->addChild($fieldName, substr(htmlspecialchars($data), 0, $charLimit));
                 }
             }
         }
