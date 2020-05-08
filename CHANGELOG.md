@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.1 - 2020-05-08
+
+### Updated
+
+- Aligned field string lengths with ShipStation's limits (#16).
+
+### Added
+
+- Support for anonymous customers when shipping/billing address doesn't have a
+  name set.
+
 ## 1.3.0 - 2020-03-03
 
 ### Added
