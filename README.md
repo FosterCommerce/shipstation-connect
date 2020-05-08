@@ -106,10 +106,10 @@ Event::on(
         $order = $e->order;
 
         if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
-            $e->data = "GIFT FIELD";
+            $e->value = "GIFT FIELD";
             $e->cdata = false;
         } else {
-            $e->data = 'OTHER FIELD';
+            $e->value = 'OTHER FIELD';
         }
     }
 );
