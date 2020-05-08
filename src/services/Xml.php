@@ -338,6 +338,23 @@ class Xml extends Component
         return $customer_xml;
     }
 
+    private function generateName($firstName, $lastName)
+    {
+        if (!$firstName && !$lastName) {
+            return false;
+        }
+
+        $names = [$firstName, $lastName];
+        $names = array_filter(
+            $names, 
+            function($name) { 
+                return $name !== null && $name !== ''; 
+            }
+        );
+
+        return implode(' ', $names);
+    }
+
     /**
      * Add a BillTo address XML Child
      *
@@ -359,12 +376,10 @@ class Xml extends Component
 
         if ($billingAddress) {
             $billTo_xml = $this->address($customer_xml, $billingAddress, 'BillTo');
-            if ($billingAddress->firstName && $billingAddress->lastName) {
-                $name = "{$billingAddress->firstName} {$billingAddress->lastName}";
-            } else {
+            if (!$name = $this->generateName($billingAddress->firstName, $billingAddress->lastName)) {
                 $user = $customer->getUser();
                 if ($user) {
-                    $name = ($user->firstName && $user->lastName) ? "{$user->firstName} {$user->lastName}" : 'unknown';
+                    $name = $this->generateName($user->firstName, $user->lastName) ?: 'Unknown';
                 } else {
                     $name = 'Unknown';
                 }
@@ -389,12 +404,10 @@ class Xml extends Component
     {
         $shippingAddress = $order->getShippingAddress();
         $shipTo_xml = $this->address($customer_xml, $shippingAddress, 'ShipTo');
-        if ($shippingAddress->firstName && $shippingAddress->lastName) {
-            $name = "{$shippingAddress->firstName} {$shippingAddress->lastName}";
-        } else {
+        if (!$name = $this->generateName($shippingAddress->firstName, $shippingAddress->lastName)) {
             $user = $customer->getUser();
             if ($user) {
-                $name = ($user->firstName && $user->lastName) ? "{$user->firstName} {$user->lastName}" : 'Unknown';
+                $name = $this->generateName($user->firstName, $user->lastName) ?: 'Unknown';
             } else {
                 $name = 'Unknown';
             }
