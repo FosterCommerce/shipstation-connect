@@ -363,7 +363,11 @@ class Xml extends Component
                 $name = "{$billingAddress->firstName} {$billingAddress->lastName}";
             } else {
                 $user = $customer->getUser();
-                $name = ($user->firstName && $user->lastName) ? "{$user->firstName} {$user->lastName}" : 'unknown';
+                if ($user) {
+                    $name = ($user->firstName && $user->lastName) ? "{$user->firstName} {$user->lastName}" : 'unknown';
+                } else {
+                    $name = 'Unknown';
+                }
             }
             $this->addChildWithCDATA($billTo_xml, 'Name', $name);
             $billTo_xml->addChild('Email', $order->email);
@@ -389,7 +393,11 @@ class Xml extends Component
             $name = "{$shippingAddress->firstName} {$shippingAddress->lastName}";
         } else {
             $user = $customer->getUser();
-            $name = ($user->firstName && $user->lastName) ? "{$user->firstName} {$user->lastName}" : 'unknown';
+            if ($user) {
+                $name = ($user->firstName && $user->lastName) ? "{$user->firstName} {$user->lastName}" : 'Unknown';
+            } else {
+                $name = 'Unknown';
+            }
         }
         $this->addChildWithCDATA($shipTo_xml, 'Name', $name);
 
