@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2 - 2020-05-08
+
+### Fixed
+
+- String length limit for line item options.
+
 ## 1.3.1 - 2020-05-08
 
 ### Updated

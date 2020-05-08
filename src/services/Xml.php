@@ -308,7 +308,7 @@ class Xml extends Component
                 $value = json_encode($value);
             }
 
-            $this->addChildWithCDATA($option_xml, 'Value', $value);
+            $this->addChildWithCDATA($option_xml, 'Value', substr(htmlspecialchars($value), 0, 100));
 
             // ShipStation limits the number of options on any line item
             $index++;
