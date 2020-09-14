@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.3 - 2020-09-14
+
+### Updated
+
+- Updated to work with Craft Basic Authentication when enabled.
+
 ## 1.3.2 - 2020-05-08
 
 ### Fixed

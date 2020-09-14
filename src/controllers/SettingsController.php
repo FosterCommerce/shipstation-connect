@@ -12,8 +12,10 @@ class SettingsController extends Controller
 
     public function actionIndex()
     {
+        $plugin = Plugin::getInstance();
         return $this->renderTemplate("shipstationconnect/settings/index", [
-            'settings' => Plugin::getInstance()->settings,
+            'settings' => $plugin->settings,
+            'isUsingCraftAuth' => $plugin->isAuthHandledByCraft(),
         ]);
     }
 

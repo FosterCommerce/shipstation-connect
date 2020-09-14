@@ -4,6 +4,8 @@ namespace fostercommerce\shipstationconnect;
 use Craft;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
+use craft\services\UserPermissions;
+use craft\events\RegisterUserPermissionsEvent;
 use yii\base\Event;
 use yii\base\Exception;
 use fostercommerce\shipstationconnect\web\twig\filters\IsFieldTypeFilter;
@@ -32,6 +34,12 @@ class Plugin extends \craft\base\Plugin
                 $event->rules['shipstationconnect/settings/save'] = 'shipstationconnect/settings/save';
             }
         );
+
+        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
+            $event->permissions['ShipStation Connect'] = [
+                'shipstationconnect-processOrders' => ['label' => 'Process Orders'],
+            ];
+        });
     }
 
     protected function beforeInstall(): bool
@@ -77,5 +85,19 @@ class Plugin extends \craft\base\Plugin
         return Craft::$app->getView()->renderTemplate('shipstationconnect/settings', [
             'settings' => $this->getSettings()
         ]);
+    }
+
+    public function isAuthHandledByCraft()
+    {
+        // RE https://github.com/craftcms/cms/issues/6421, if the site has the
+        // `enableBasicHttpAuth` setting set to true, we can assume that Craft
+        // will handle the authentication of requests.
+        if (version_compare(Craft::$app->getVersion(), '3.5.0') >= 0) {
+            if (Craft::$app->getConfig()->getGeneral()->enableBasicHttpAuth) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

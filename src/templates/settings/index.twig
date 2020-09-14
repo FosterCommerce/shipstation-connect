@@ -81,6 +81,12 @@
         </div>
       </div>
   {% endif %}
+  {% if isUsingCraftAuth %}
+  <p class="error">
+    This site is using Craft's enableBasicHttpAuth feature. A dedicated user 
+    should be added to access ShipStation Connect.
+  </p>
+  {% endif %}
 
   {{ forms.autosuggestField({
       label: 'Username'|t('shipstationconnect'),
@@ -91,6 +97,7 @@
       errors: settings.getErrors('shipstationUsername'),
       class: 'ltr',
       suggestEnvVars: true,
+      disabled: isUsingCraftAuth,
   }) }}
 
   {{ forms.autosuggestField({
@@ -103,6 +110,7 @@
       errors: settings.getErrors('shipstationPassword'),
       class: 'ltr',
       suggestEnvVars: true,
+      disabled: isUsingCraftAuth,
   }) }}
 
   {{ forms.textField({

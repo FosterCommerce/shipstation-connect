@@ -25,6 +25,23 @@ class OrdersController extends Controller
     protected $allowAnonymous = true;
 
     /**
+     * @inheritDoc
+     */
+    public function init()
+    {
+        // Allow anonymous access only when this plugin is handling basic
+        // authentication, otherwise require auth so that Craft doesn't let
+        // unauthenticated requests go through.
+        $isUsingCraftAuth = Plugin::getInstance()->isAuthHandledByCraft();
+        $this->allowAnonymous = !$isUsingCraftAuth;
+        if ($isUsingCraftAuth) {
+            $this->requirePermission('shipstationconnect-processOrders');
+        }
+
+        return parent::init();
+    }
+
+    /**
      * ShipStation will hit this action for processing orders, both POSTing and GETting.
      *   ShipStation will send a GET param 'action' of either shipnotify or export.
      *   If this is not found or is any other string, this will throw a 400 exception.
@@ -85,12 +102,16 @@ class OrdersController extends Controller
      */
     protected function authenticate()
     {
-        $settings = Plugin::getInstance()->settings;
+        $plugin = Plugin::getInstance();
+        if ($plugin->isAuthHandledByCraft()) {
+            return true;
+        }
+
+        $settings = $plugin->settings;
         $expectedUsername = Craft::parseEnv($settings->shipstationUsername);
         $expectedPassword = Craft::parseEnv($settings->shipstationPassword);
 
-        $username = array_key_exists('PHP_AUTH_USER', $_SERVER) ? $_SERVER['PHP_AUTH_USER'] : null;
-        $password = array_key_exists('PHP_AUTH_PW', $_SERVER) ? $_SERVER['PHP_AUTH_PW'] : null;
+        list($username, $password) = Craft::$app->getRequest()->getAuthCredentials();
 
         return $expectedUsername === $username && $expectedPassword === $password;
     }

@@ -12,7 +12,8 @@ Install ShipStation Connect from the Plugin Store or with Composer
 
 ### From the Plugin Store
 
-Go to the Plugin Store in your project’s Control Panel and search for “ShipStation Connect.” Click on the “Install” button in its modal window.
+Go to the Plugin Store in your project’s Control Panel and search for
+“ShipStation Connect.” Click on the “Install” button in its modal window.
 
 ### With Composer
 
@@ -29,30 +30,55 @@ composer require fostercommerce/shipstationconnect
 ./craft install/plugin shipstationconnect
 ```
 
-After installing, go to the Craft control panel plugin settings page to configure the settings for the plugin.
+After installing, go to the Craft control panel plugin settings page to
+configure the settings for the plugin.
 
 ## Custom Store Configuration
 
-Configure your connection in ShipStation following these instructions: [ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/360025856192-Custom-Store-Development-Guide#UUID-685007d9-4cda-06f2-d2f6-011ab46805af_UUID-001f552d-4260-aeb0-8a23-0f6ff166e045).
+Configure your connection in ShipStation following these instructions:
+[ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/360025856192-Custom-Store-Development-Guide#UUID-685007d9-4cda-06f2-d2f6-011ab46805af_UUID-001f552d-4260-aeb0-8a23-0f6ff166e045).
 
 ### Connect Your Craft Store to ShipStation
 
-The "URL to Custom XML Page" is shown in the ShipStation Connect settings view in Craft.
+The "URL to Custom XML Page" is shown in the ShipStation Connect settings view
+in Craft.
 
 ### Username/Password
 
-ShipStation allows you to set a custom username and password combination for a connected store. This combination should match the values stored in the ShipStation Connnect settings view in your Craft control panel.
+ShipStation allows you to set a custom username and password combination for a
+connected store. This combination should match the values stored in the 
+ShipStation Connnect settings view in your Craft control panel.
 
-**Note:** These are *not* your ShipStation credentials, nor your Craft user credentials.
+**Note:** These are *not* your ShipStation credentials, nor your Craft user
+credentials.
 
 As of version 1.2.4, these values can be set with environment variables.
 ![Username/Password variables](screenshots/username-password-env-values.png)
+
+#### Using Craft's Basic Authentication
+
+As of Craft 3.5.0 basic authentication headers can be used to authenticate users
+in Craft by setting the
+[enableBasicHttpAuth](https://github.com/craftcms/cms/commit/0bb12973635f8cd3cfa11e97b94306dc643c054b)
+config setting to `true`.
+
+If basic authentication is enabled for your site,
+ShipStation Connect will assume that requests to it have already been
+authenticated and continue processing. Using this feature removes the
+requirement to set a username/password in the settings and instead it is
+recommended to create a dedicated user with the
+`shipstationconnect-processOrders` permission for accessing ShipStation Connect.
+
+When `enableBasicHttpAuth` is `false`, the plugin will read the auth header and
+validate against the username/password configured in ShipStation Connect's
+settings.
 
 #### Debugging Apache Authentication Errors
 
 > The remote server returned an error
 
-If you are seeing a 400 error (401 or 404 notably) and you're running on Apache. Try adding the following to your apache config.
+If you are seeing a 400 error (401 or 404 notably) and you're running on Apache.
+Try adding the following to your apache config.
 
 ```
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -60,7 +86,9 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 ### Order Statuses
 
-Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit each platform to use custom statuses and ShipStation can match multiple Craft statuses to a single ShipStation status, when needed.
+Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit
+each platform to use custom statuses and ShipStation can match multiple Craft
+statuses to a single ShipStation status, when needed.
 
 ## Commerce Integration
 
@@ -76,10 +104,14 @@ The matrix field should have a block type with text fields for the following:
 
 ![Matrix Field configuration](screenshots/matrix_field.png)
 
-In the ShipStation Connnect settings, select the matrix field, and enter the handles for the block type and text fields.
+In the ShipStation Connnect settings, select the matrix field, and enter the
+handles for the block type and text fields.
 ![Shipping Info Matrix Field](screenshots/shipping-info-matrix-field.png)
 
-When a shipping notification is received for an order from ShipStation, the plugin will add the shipping information to the Shipping Information field on the order and set the order to the Craft status paired with your ShipStation stores Shipped status.
+When a shipping notification is received for an order from ShipStation, the
+plugin will add the shipping information to the Shipping Information field on
+the order and set the order to the Craft status paired with your ShipStation
+stores Shipped status.
 
 ## Custom Fields
 
@@ -122,7 +154,11 @@ Event::on(
 - `data` - The data to set on this field.
 - `cdata` - Whether or not to wrap the value in a CDATA block.
 
-If you've changed the `OrderNumber` field to be anything other than the order's reference number, you'll need to listen to the `OrdersController::FIND_ORDER_EVENT` to use your own query to fetch the order. For example, if you're using the order's ID as the OrderNumber for ShipStation, you can fetch the order by ID:
+If you've changed the `OrderNumber` field to be anything other than the order's
+reference number, you'll need to listen to the
+`OrdersController::FIND_ORDER_EVENT` to use your own query to fetch the order.
+For example, if you're using the order's ID as the OrderNumber for ShipStation,
+you can fetch the order by ID:
 
 ```php
 Event::on(
