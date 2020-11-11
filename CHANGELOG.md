@@ -5,6 +5,7 @@
 ### Added
 
 - Setting to configure "Shipped" order status handle.
+- Add condition to ensure an order has a customer in some edge cases.
 
 ## 1.3.3 - 2020-09-14
 
