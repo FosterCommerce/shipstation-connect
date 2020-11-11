@@ -131,6 +131,9 @@
       errors: settings.getErrors('orderIdPrefix'),
   }) }}
 
+  {% set statusHandles = craft.commerce.orderStatuses.getAllOrderStatuses %}
+  {% set statusHandles = statusHandles|map(s => { label: s.name, value: s.handle }) %}
+
   <div class="field">
       <div class="heading">
           <label>Commerce Order Statuses</label>
@@ -139,11 +142,20 @@
           </div>
       </div>
       <ul style="list-style-type:disc;margin-left:20px;">
-          {% for status in craft.commerce.orderStatuses.getAllOrderStatuses %}
-          <li>{{ status.name }} &mdash; <code>{{ status.handle }}</code></li>
+          {% for status in statusHandles %}
+          <li>{{ status.label }} &mdash; <code>{{ status.value }}</code></li>
           {% endfor %}
       </ul>
   </div>
+
+  <h2>Shipped Order Status</h2>
+
+  {{ forms.selectField({
+      label: 'Status Handle'|t('shipstationconnect'),
+      name: 'settings[shippedStatusHandle]',
+      value: settings.shippedStatusHandle,
+      options: statusHandles,
+  }) }}
 
   <h2>Shipping Info Matrix Field</h2>
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Setting to configure "Shipped" order status handle.
+
 ## 1.3.3 - 2020-09-14
 
 ### Updated

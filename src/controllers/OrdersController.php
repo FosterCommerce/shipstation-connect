@@ -237,16 +237,19 @@ class OrdersController extends Controller
     {
         $order = $this->orderFromParams();
 
-        $status = CommercePlugin::getInstance()->orderStatuses->getOrderStatusByHandle('shipped');
+        $settings = Plugin::getInstance()->settings;
+
+        $status = CommercePlugin::getInstance()
+            ->orderStatuses
+            ->getOrderStatusByHandle($settings->shippedStatusHandle);
         if (!$status) {
-            throw new ErrorException("Failed to find Commerce OrderStatus 'Shipped'");
+            throw new ErrorException("Failed to find shipped order status");
         }
 
         $order->orderStatusId = $status->id;
         $order->message = 'Marking order as shipped. Adding shipping information.';
         $shippingInformation = $this->getShippingInformationFromParams();
 
-        $settings = Plugin::getInstance()->settings;
         $matrix = Craft::$app->fields->getFieldByHandle($settings->matrixFieldHandle);
 
         // If the field exists
@@ -283,7 +286,7 @@ class OrdersController extends Controller
             );
         }
 
-        if (Craft::$app->elements->saveElement($order)) {
+        if (Craft::$app->elements->saveElement($order, false)) {
             return $this->asJson(['success' => true]);
         } else {
             throw new ErrorException('Failed to save order with id ' . $order->id);
