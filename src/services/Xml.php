@@ -21,7 +21,7 @@ class Xml extends Component
         $settings = Plugin::getInstance()->settings;
         $billingSameAsShipping = $settings->billingSameAsShipping;
         return $order->getShippingAddress()
-            && $order->getOrderStatus();
+            && $order->getOrderStatus()
             && ($billingSameAsShipping || $order->getBillingAddress())
             && $order->getCustomer();
     }
