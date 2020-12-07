@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.5 - 2020-12-07
+
+### Fixed
+
+- Error which could occur when an order is missing an order status
+[[#23](https://github.com/FosterCommerce/shipstation-connect/pull/23)].
+
 ## 1.3.4 - 2020-11-11
 
 ### Added
