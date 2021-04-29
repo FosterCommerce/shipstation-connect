@@ -186,6 +186,10 @@ class Xml extends Component
         $item_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
         $item_mapping = [
+            'LineItemID' => [
+                'field' => 'id',
+                'cdata' => false,
+            ],
             'SKU' => [
                 'callback' => function ($item) {
                     return $item->snapshot['sku'];
@@ -349,9 +353,9 @@ class Xml extends Component
 
         $names = [$firstName, $lastName];
         $names = array_filter(
-            $names, 
-            function($name) { 
-                return $name !== null && $name !== ''; 
+            $names,
+            function($name) {
+                return $name !== null && $name !== '';
             }
         );
 

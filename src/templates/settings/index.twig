@@ -15,7 +15,7 @@
   <input type="hidden" name="action" value="shipstationconnect/settings/save">
   {{ redirectInput('shipstationconnect/settings') }}
   <div>
-      <h3>Custom Store</h3>
+      <h2>Custom Store Configuration</h2>
       <p>
           ShipStation's custom store integration works by requesting orders from ShipStation Connect (shipped and unshipped),
           and then by notifying ShipStation Connect when an order has been shipped.
@@ -83,7 +83,7 @@
   {% endif %}
   {% if isUsingCraftAuth %}
   <p class="error">
-    This site is using Craft's enableBasicHttpAuth feature. A dedicated user 
+    This site is using Craft's enableBasicHttpAuth feature. A dedicated user
     should be added to access ShipStation Connect.
   </p>
   {% endif %}
@@ -131,6 +131,15 @@
       errors: settings.getErrors('orderIdPrefix'),
   }) }}
 
+  {{ forms.lightSwitchField({
+      label: "Billing address same as shipping address"|t('shipstationconnect'),
+      instructions: "When billing address is missing, use the shipping address instead"|t('shipstationconnect'),
+      name: 'settings[billingSameAsShipping]',
+      on: settings.billingSameAsShipping,
+      checked: settings.billingSameAsShipping,
+      errors: settings.getErrors('billingSameAsShipping')
+  }) }}
+
   {% set statusHandles = craft.commerce.orderStatuses.getAllOrderStatuses %}
   {% set statusHandles = statusHandles|map(s => { label: s.name, value: s.handle }) %}
 
@@ -148,16 +157,54 @@
       </ul>
   </div>
 
-  <h2>Shipped Order Status</h2>
+  <hr>
+
+  <h2>Shipment Notification</h2>
 
   {{ forms.selectField({
-      label: 'Status Handle'|t('shipstationconnect'),
+      label: 'Shipped Status Handle'|t('shipstationconnect'),
       name: 'settings[shippedStatusHandle]',
       value: settings.shippedStatusHandle,
       options: statusHandles,
   }) }}
 
-  <h2>Shipping Info Matrix Field</h2>
+  {{ forms.lightSwitchField({
+      label: "Save shipment items"|t('shipstationconnect'),
+      instructions: "When enabled, ShipStation Connect will record line item quantities in each shipment and mark line item and order statuses as partially or fully shipped."|t('shipstationconnect'),
+      name: 'settings[saveShipmentItems]',
+      id: 'saveShipmentItems',
+      on: settings.saveShipmentItems,
+      checked: settings.saveShipmentItems,
+      errors: settings.getErrors('saveShipmentItems')
+  }) }}
+
+  <div id="status-handles"{% if not settings.saveShipmentItems %} class="hidden"{% endif %} style="margin-bottom: 24px;">
+    {% set lineItemStatusHandles = craft.commerce.lineItemStatuses.getAllLineItemStatuses() %}
+    {% set lineItemStatusHandles = lineItemStatusHandles|map(s => { label: s.name, value: s.handle }) %}
+
+    {{ forms.selectField({
+        label: 'Partially Shipped Status Handle'|t('shipstationconnect'),
+        name: 'settings[partiallyShippedStatusHandle]',
+        value: settings.partiallyShippedStatusHandle,
+        options: statusHandles,
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Shipped Line Item Status Handle'|t('shipstationconnect'),
+        name: 'settings[shippedLineItemStatusHandle]',
+        value: settings.shippedLineItemStatusHandle,
+        options: lineItemStatusHandles
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Partially Shipped Line Item Status Handle'|t('shipstationconnect'),
+        name: 'settings[partiallyShippedLineItemStatusHandle]',
+        value: settings.partiallyShippedLineItemStatusHandle,
+        options: lineItemStatusHandles
+    }) }}
+  </div>
+
+  <h3>Shipping Info Matrix Field</h3>
 
   {% set fields = craft.app.fields.allFields %}
   {% set fields = fields|filter(f => is_matrix(f))|map(f => { label: f.name, value: f.handle }) %}
@@ -211,13 +258,14 @@
       value: settings.trackingNumberFieldHandle,
       errors: settings.getErrors('trackingNumberFieldHandle'),
   }) }}
-
-  {{ forms.lightSwitchField({
-      label: "Billing address same as shipping address"|t('shipstationconnect'),
-      instructions: "When billing address is missing, use the shipping address instead"|t('shipstationconnect'),
-      name: 'settings[billingSameAsShipping]',
-      on: settings.billingSameAsShipping,
-      checked: settings.billingSameAsShipping,
-      errors: settings.getErrors('billingSameAsShipping')
-  }) }}
 {% endset %}
+
+{% js %}
+  $('#saveShipmentItems').on('change', function() {
+    if ($('[name="settings[saveShipmentItems]"]').val() == 1) {
+      $('#status-handles').removeClass('hidden');
+    } else {
+      $('#status-handles').addClass('hidden');
+    }
+  });
+{% endjs %}

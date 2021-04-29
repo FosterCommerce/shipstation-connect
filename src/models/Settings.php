@@ -11,11 +11,15 @@ class Settings extends Model
     public $shipstationPassword = '';
     public $ordersPageSize = 25;
     public $orderIdPrefix = '';
+    public $billingSameAsShipping = false;
     public $shippedStatusHandle = 'shipped';
+    public $saveShipmentItems = false;
+    public $partiallyShippedStatusHandle = '';
+    public $shippedLineItemStatusHandle = '';
+    public $partiallyShippedLineItemStatusHandle = '';
     public $matrixFieldHandle = 'shippingInfo';
     public $blockTypeHandle = 'shippingInfo';
     public $carrierFieldHandle = 'carrier';
     public $serviceFieldHandle = 'service';
     public $trackingNumberFieldHandle = 'trackingNumber';
-    public $billingSameAsShipping = false;
 }
