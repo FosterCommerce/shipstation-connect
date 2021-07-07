@@ -115,21 +115,13 @@ stores Shipped status.
 
 ## Custom Fields
 
-Add information to the following fields defined by ShipStation:
-
-- OrderNumber
-- ShippingMethod
-- CustomField1
-- CustomField2
-- CustomField3
-- InternalNotes
-- CustomerNotes
-- Gift
-- GiftMessage
-
-Use the `OrderFieldEvent` to set the values per field:
+You can customize the data that is sent to ShipStation by listening to the `OrderFieldEvent` event in a custom module or plugin, and set the values that you want per field, like in the following example:
 
 ```php
+use yii\base\Event;
+use fostercommerce\shipstationconnect\services\Xml;
+use fostercommerce\shipstationconnect\events\OrderFieldEvent;
+
 Event::on(
     Xml::class,
     Xml::ORDER_FIELD_EVENT,
@@ -137,11 +129,12 @@ Event::on(
         $fieldName = $e->field;
         $order = $e->order;
 
-        if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
-            $e->value = "GIFT FIELD";
-            $e->cdata = false;
-        } else {
-            $e->value = 'OTHER FIELD';
+        if ($fieldName === OrderFieldEvent::FIELD_ORDER_NUMBER) {
+            // Set ShipStation's order number to the order ID, instead of the default reference number
+            $e->value = $order->id;
+        } elseif ($fieldName === OrderFieldEvent::FIELD_CUSTOM_FIELD_1) {
+            // Store the reference number in a custom field
+            $e->value = 'Order Reference: ' . $order->reference;
         }
     }
 );
@@ -149,23 +142,40 @@ Event::on(
 
 `OrderFieldEvent` properties:
 
-- `field` - The custom field name.
+- `field` - The custom field name, one of the following:
+  |PHP Constant|Value|
+  |---|---|
+  |`OrderFieldEvent::FIELD_ORDER_NUMBER`|`'OrderNumber'`|
+  |`OrderFieldEvent::FIELD_SHIPPING_METHOD`|`'ShippingMethod'`|
+  |`OrderFieldEvent::FIELD_CUSTOM_FIELD_1`|`'CustomField1'`|
+  |`OrderFieldEvent::FIELD_CUSTOM_FIELD_2`|`'CustomField2'`|
+  |`OrderFieldEvent::FIELD_CUSTOM_FIELD_3`|`'CustomField3'`|
+  |`OrderFieldEvent::FIELD_INTERNAL_NOTES`|`'InternalNotes'`|
+  |`OrderFieldEvent::FIELD_CUSTOMER_NOTES`|`'CustomerNotes'`|
+  |`OrderFieldEvent::FIELD_GIFT`|`'Gift'`|
+  |`OrderFieldEvent::FIELD_GIFT_MESSAGE`|`'GiftMessage'`|
 - `order` - Current order data.
-- `data` - The data to set on this field.
-- `cdata` - Whether or not to wrap the value in a CDATA block.
+- `value` - The data to set on this field.
+- `cdata` - Whether or not to wrap the value in a `CDATA` block.
 
-If you've changed the `OrderNumber` field to be anything other than the order's
-reference number, you'll need to listen to the
+If you've changed the `OrderFieldEvent::FIELD_ORDER_NUMBER` field to be anything
+other than the order's reference number, you'll need to listen to the
 `OrdersController::FIND_ORDER_EVENT` to use your own query to fetch the order.
-For example, if you're using the order's ID as the OrderNumber for ShipStation,
-you can fetch the order by ID:
+In the example above, we're changing it to be the order's ID, so we would need
+to fetch the order by ID:
 
 ```php
+use yii\base\Event;
+use fostercommerce\shipstationconnect\controllers\OrdersController;
+use fostercommerce\shipstationconnect\events\FindOrderEvent;
+
 Event::on(
     OrdersController::class,
     OrdersController::FIND_ORDER_EVENT,
     function (FindOrderEvent $e) {
-        if ($order = Order::find()->id($e->order_number)->one()) {
+        $order = Order::find()->id($e->orderNumber)->one();
+
+        if ($order) {
             $e->order = $order;
         }
     }
@@ -175,5 +185,4 @@ Event::on(
 `FindOrderEvent` properties:
 
 - `orderNumber` - The order number sent by ShipStation.
-- `order` - The order which will be updated with shipping information.
-
+- `order` - The order that will be updated with shipping information.
