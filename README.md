@@ -81,6 +81,7 @@ If you are seeing a 400 error (401 or 404 notably) and you're running on Apache.
 Try adding the following to your apache config.
 
 ```
+CGIPassAuth On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 ```
 
