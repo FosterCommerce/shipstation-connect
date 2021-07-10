@@ -273,7 +273,7 @@ class Xml extends Component
             ],
             'UnitPrice'  => [
                 'callback' => function ($order) {
-                    return number_format($order->getTotalDiscount(), 2);
+                    return round($order->getTotalDiscount(), 2);
                 },
                 'cdata' => false,
             ],
