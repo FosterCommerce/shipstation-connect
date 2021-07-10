@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.6 - 2021-07-09
+
+### Fixed
+
+- Fixed invalid format in orders XML for discounts $1,000 or higher.
+
 ## 1.3.5 - 2020-12-07
 
 ### Fixed
