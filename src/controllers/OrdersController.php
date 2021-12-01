@@ -4,6 +4,7 @@ namespace fostercommerce\shipstationconnect\controllers;
 use Craft;
 use craft\web\Controller;
 use craft\elements\MatrixBlock;
+use craft\helpers\ElementHelper;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
 use craft\db\Query;
@@ -136,7 +137,9 @@ class OrdersController extends Controller
 
         $storeFieldHandle = Plugin::getInstance()->settings->storesFieldHandle;
         if ($store !== null || $storeFieldHandle !== '') {
-            $query->andWhere(["field_${storeFieldHandle}" => $store]);
+            $field = Craft::$app->getFields()->getFieldByHandle($storeFieldHandle);
+            $fieldColumnName = ElementHelper::fieldColumnFromField($field);
+            $query->andWhere([$fieldColumnName => $store]);
         }
 
         $query->orderBy('dateUpdated asc');

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.7 - 2021-12-01
+
+### Fixed
+
+- Fixed issue where a fields with a column suffix would break the query fetching
+  orders.
+
 ## 1.3.6 - 2021-07-09
 
 ### Fixed
