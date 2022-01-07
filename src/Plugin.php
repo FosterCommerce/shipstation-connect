@@ -6,15 +6,17 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
 use craft\services\UserPermissions;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\web\twig\variables\CraftVariable;
 use yii\base\Event;
 use yii\base\Exception;
 use fostercommerce\shipstationconnect\web\twig\filters\IsFieldTypeFilter;
+use fostercommerce\shipstationconnect\variables\ShipstationConnectVariable;
 
 class Plugin extends \craft\base\Plugin
 {
     public $hasCpSettings = true;
     public $hasCpSection = true;
-    public $schemaVersion = '1.0.1';
+    public $schemaVersion = '1.1.0';
 
     public function init()
     {
@@ -39,6 +41,11 @@ class Plugin extends \craft\base\Plugin
             $event->permissions['ShipStation Connect'] = [
                 'shipstationconnect-processOrders' => ['label' => 'Process Orders'],
             ];
+        });
+
+        Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
+            $variable = $event->sender;
+            $variable->set('shipstationConnect', ShipstationConnectVariable::class);
         });
     }
 

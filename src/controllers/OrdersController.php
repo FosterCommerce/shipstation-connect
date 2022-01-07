@@ -7,6 +7,7 @@ use craft\elements\MatrixBlock;
 use craft\helpers\ElementHelper;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
+use craft\commerce\models\LineItem;
 use craft\db\Query;
 use craft\db\Table;
 use craft\models\MatrixBlockType;
@@ -15,6 +16,8 @@ use yii\base\ErrorException;
 use yii\base\Event;
 use fostercommerce\shipstationconnect\Plugin;
 use fostercommerce\shipstationconnect\events\FindOrderEvent;
+use fostercommerce\shipstationconnect\records\Shipment as ShipmentRecord;
+use SimpleXMLElement;
 
 class OrdersController extends Controller
 {
@@ -146,7 +149,7 @@ class OrdersController extends Controller
 
         $num_pages = $this->paginateOrders($query);
 
-        $parent_xml = new \SimpleXMLElement('<Orders />');
+        $parent_xml = new SimpleXMLElement('<Orders />');
         $parent_xml->addAttribute('pages', $num_pages);
 
         Plugin::getInstance()->xml->orders($parent_xml, $query->all());
@@ -157,8 +160,8 @@ class OrdersController extends Controller
     /**
      * For a Criteria instance of Orders, return the number of total pages and apply a corresponding offset and limit
      *
-     * @param ElementCriteriaModel, a REFERENCE to the criteria instance
-     * @return Int total number of pages
+     * @param ElementCriteriaModel $query, a REFERENCE to the criteria instance
+     * @return int total number of pages
      */
     protected function paginateOrders(&$query)
     {
@@ -228,9 +231,7 @@ class OrdersController extends Controller
 
     /**
      * Updates order status for a given order. This is called by ShipStation.
-     * The order is found using the query param `order_number`.
-     *
-     * TODO: This assumes there is a "shipped" handle for an order status
+     * The order is found using the XML node OrderNumber.
      *
      * See craft/plugins/commerce/controllers/Commerce_OrdersController.php#actionUpdateStatus() for details
      *
@@ -238,20 +239,71 @@ class OrdersController extends Controller
      */
     protected function postShipment()
     {
-        $order = $this->orderFromParams();
+        $request = Craft::$app->getRequest();
+
+        $shipNotice = json_decode(json_encode(new SimpleXMLElement($request->getRawBody())));
+
+        $order = $this->orderFromBody($shipNotice);
 
         $settings = Plugin::getInstance()->settings;
 
-        $status = CommercePlugin::getInstance()
+        // Set default order status then change accordingly if saveShipmentItems is set
+        $orderStatusHandle = $settings->shippedStatusHandle;
+        if ($settings->saveShipmentItems) {
+            $lineItemStatuses = CommercePlugin::getInstance()->getLineItemStatuses();
+            $partiallyShipped = $lineItemStatuses
+                ->getLineItemStatusByHandle($settings->partiallyShippedLineItemStatusHandle);
+            $shipped = $lineItemStatuses
+                ->getLineItemStatusByHandle($settings->shippedLineItemStatusHandle);
+
+            $newQtys = [];
+            if (is_array($shipNotice->Items->Item)) {
+                foreach ($shipNotice->Items->Item as $item) {
+                    $newQtys[$item->SKU] = $item->Quantity;
+                }
+            } else {
+                $newQtys[$shipNotice->Items->Item->SKU] = $shipNotice->Items->Item->Quantity;
+            }
+
+            $shippedQtys = $this->getShippedQtys($order->id);
+
+            $shippedLineItems = 0;
+            $rows = [
+                'save' => [],
+                'update' => [],
+                'delete' => []
+            ];
+            foreach ($order->lineItems as $lineItem) {
+                if (isset($newQtys[$lineItem->sku])) {
+                    $status = $this->getNewLineItemStatus(
+                        $lineItem,
+                        $newQtys[$lineItem->sku],
+                        $shippedQtys[$lineItem->sku] ?? null
+                    );
+
+                    $lineItem->lineItemStatusId = $$status->id;
+                }
+
+                if ($lineItem->lineItemStatusId == $shipped->id) {
+                    $shippedLineItems++;
+                }
+            }
+
+            if ($shippedLineItems !== count($order->lineItems)) {
+                $orderStatusHandle = $settings->partiallyShippedStatusHandle;
+            }
+        }
+
+        $orderStatus = CommercePlugin::getInstance()
             ->orderStatuses
-            ->getOrderStatusByHandle($settings->shippedStatusHandle);
-        if (!$status) {
+            ->getOrderStatusByHandle($orderStatusHandle);
+        if (!$orderStatus) {
             throw new ErrorException("Failed to find shipped order status");
         }
 
-        $order->orderStatusId = $status->id;
+        $order->orderStatusId = $orderStatus->id;
         $order->message = 'Marking order as shipped. Adding shipping information.';
-        $shippingInformation = $this->getShippingInformationFromParams();
+        $shippingInformation = $this->getShippingInformationFromBody($shipNotice);
 
         $matrix = Craft::$app->fields->getFieldByHandle($settings->matrixFieldHandle);
 
@@ -265,11 +317,21 @@ class OrdersController extends Controller
                     'fieldId' => $matrix->id,
                     'typeId' => $blockType->id,
                 ]);
-                $block->setFieldValue($settings->carrierFieldHandle, $shippingInformation['carrier']);
-                $block->setFieldValue($settings->serviceFieldHandle, $shippingInformation['service']);
-                $block->setFieldValue($settings->trackingNumberFieldHandle, $shippingInformation['trackingNumber']);
+                $block->setFieldValues([
+                    $settings->carrierFieldHandle => $shippingInformation['carrier'],
+                    $settings->serviceFieldHandle => $shippingInformation['service'],
+                    $settings->trackingNumberFieldHandle => $shippingInformation['trackingNumber']
+                ]);
 
-                if (!Craft::$app->elements->saveElement($block)) {
+                if (Craft::$app->elements->saveElement($block)) {
+                    if ($settings->saveShipmentItems) {
+                        $shipment = new ShipmentRecord();
+                        $shipment->orderId = $order->id;
+                        $shipment->shipmentId = $block->getId();
+                        $shipment->shippedQtys = json_encode($newQtys);
+                        $shipment->save();
+                    }
+                } else {
                     Craft::warning(
                         Craft::t(
                             'shipstationconnect',
@@ -309,47 +371,48 @@ class OrdersController extends Controller
     }
 
     /**
-     * Parse parameters POSTed from ShipStation for fields available to us on the Order's shippingInfo matrix field
+     * Parse XML nodes POSTed from ShipStation for fields available to us on the Order's shippingInfo matrix field
      *
      * Note: only fields that exist in the matrix block will be set.
      *       ShipStation posts, in XML, many more fields than these, but for now we disregard.
      *       https://help.shipstation.com/hc/en-us/articles/205928478-ShipStation-Custom-Store-Development-Guide#2ai
      *
+     * @param object $body
      * @return array
      */
-    protected function getShippingInformationFromParams()
+    protected function getShippingInformationFromBody(object $body)
     {
-        $request = Craft::$app->getRequest();
+        // Test is_scalar to weed out empty properties converted to StdClass objects by json_encode
         return [
-            'carrier' => $request->getParam('carrier'),
-            'service' => $request->getParam('service'),
-            'trackingNumber' => $request->getParam('tracking_number'),
+            'carrier' => is_scalar($body->Carrier) ? $body->Carrier : '',
+            'service' => is_scalar($body->Service) ? $body->Service : '',
+            'trackingNumber' => is_scalar($body->TrackingNumber) ? $body->TrackingNumber : '',
         ];
     }
 
     /**
-     * Find the order model given the order_number passed to us from ShipStation.
+     * Find the order model given the OrderNumber passed to us from ShipStation.
      *
-     * Note: the order_number value from ShipStation corresponds to $order->number that we
+     * Note: the OrderNumber value from ShipStation corresponds to $order->number that we
      *       return to ShipStation as part of the getOrders() method above.
      *
+     * @param object $body
      * @throws HttpException, 404 if not found, 406 if order number is invalid
      * @return Commerce_Order
      */
-    protected function orderFromParams()
+    protected function orderFromBody(object $body)
     {
-        $request = Craft::$app->getRequest();
-        if ($orderNumber = $request->getParam('order_number')) {
-            $findOrderEvent = new FindOrderEvent(['orderNumber' => $orderNumber]);
+        if (isset($body->OrderNumber)) {
+            $findOrderEvent = new FindOrderEvent(['orderNumber' => $body->OrderNumber]);
             Event::trigger(static::class, self::FIND_ORDER_EVENT, $findOrderEvent);
 
             $order = $findOrderEvent->order;
             if (!$order) {
-                if ($order = Order::find()->reference($orderNumber)->one()) {
+                if ($order = Order::find()->reference($body->OrderNumber)->one()) {
                     return $order;
                 }
 
-                throw new HttpException(404, "Order with number '{$orderNumber}' not found");
+                throw new HttpException(404, "Order with number '{$body->OrderNumber}' not found");
             }
 
             return $order;
@@ -365,7 +428,7 @@ class OrdersController extends Controller
      * @param SimpleXMLElement $xml
      * @return null
      */
-    protected function returnXML(\SimpleXMLElement $xml)
+    protected function returnXML(SimpleXMLElement $xml)
     {
         header("Content-type: text/xml");
         // Output it into a buffer, in case TasksService wants to close the connection prematurely
@@ -373,5 +436,57 @@ class OrdersController extends Controller
         echo $xml->asXML();
 
         exit(0);
+    }
+
+    /**
+     * Returns whether line item status should use shipped or partiallyShipped status setting
+     *
+     * @param LineItem $lineItem
+     * @param int $newQty
+     * @param int|null $shippedQty
+     * @return string
+     */
+    protected function getNewLineItemStatus(LineItem $lineItem, int $newQty, ?int $shippedQty)
+    {
+        if ($shippedQty + $newQty === $lineItem->qty) {
+            return 'shipped';
+        }
+
+        return 'partiallyShipped';
+    }
+
+    /**
+     * Returns an array of all ShipmentRecords related to the order, keyed by line item ID
+     *
+     * @param int $orderId
+     * @return array
+     */
+    protected function getShippedQtys(int $orderId)
+    {
+        $records = ShipmentRecord::find()
+            ->where(['orderId' => $orderId])
+            ->all();
+
+        $qtys = [];
+        foreach ($records as $record) {
+            $qtys = array_merge_recursive($qtys, json_decode($record->shippedQtys, true));
+        }
+
+        return array_map([$this, 'sumQtys'], $qtys);
+    }
+
+    /**
+     * Returns sum of array, otherwise typecast int
+     *
+     * @param mixed $value
+     * @return int
+     */
+    protected function sumQtys($val)
+    {
+        if (gettype($val) === 'array') {
+            return array_sum($val);
+        }
+
+        return (int)$val;
     }
 }
