@@ -1,6 +1,5 @@
-# ShipStation Connect for Craft CMS 3 and Commerce 2/3
-
 ![Screenshot](resources/img/new-plugin-header.png)
+# ShipStation Connect for Craft CMS 3 and Commerce 2/3
 
 A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
