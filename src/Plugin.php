@@ -6,17 +6,39 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
 use craft\services\UserPermissions;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\base\Model;
 use yii\base\Event;
 use yii\base\Exception;
 use fostercommerce\shipstationconnect\web\twig\filters\IsFieldTypeFilter;
 
 class Plugin extends \craft\base\Plugin
 {
-    public $hasCpSettings = true;
-    public $hasCpSection = true;
-    public $schemaVersion = '1.0.1';
+    /**
+     * @var		bool	$hasCpSettings
+     */
+    public bool $hasCpSettings = true;
+    
+    /**
+     * @var		bool	$hasCpSection
+     */
+    public bool $hasCpSection = true;
+    
+    /**
+     * @var		string	$schemaVersion
+     */
+    public string $schemaVersion = '1.0.1';
 
-    public function init()
+    
+    /**
+     * init.
+     *
+     * @author	Unknown
+     * @since	v0.0.1
+     * @version	v1.0.0	Monday, May 23rd, 2022.
+     * @access	public
+     * @return	void
+     */
+    public function init(): void
     {
         parent::init();
 
@@ -42,14 +64,14 @@ class Plugin extends \craft\base\Plugin
         });
     }
 
-    protected function beforeInstall(): bool
+    protected function beforeInstall(): void
     {
         if (!Craft::$app->plugins->isPluginInstalled('commerce')) {
             Craft::error(Craft::t(
                 'shipstationconnect',
                 'Failed to install. Craft Commerce is required.'
             ));
-            return false;
+            // return false;
         }
 
         if (!Craft::$app->plugins->isPluginEnabled('commerce')) {
@@ -57,13 +79,11 @@ class Plugin extends \craft\base\Plugin
                 'shipstationconnect',
                 'Failed to install. Craft Commerce is required.'
             ));
-            return false;
+           // return false;
         }
-
-        return true;
     }
 
-    public function getCpNavItem()
+    public function getCpNavItem(): ?array
     {
         $item = parent::getCpNavItem();
 
@@ -75,12 +95,12 @@ class Plugin extends \craft\base\Plugin
         return $item;
     }
 
-    protected function createSettingsModel()
+    protected function createSettingsModel(): ?Model
     {
         return new \fostercommerce\shipstationconnect\models\Settings();
     }
 
-    public function settingsHtml()
+    public function settingsHtml(): ?string
     {
         return Craft::$app->getView()->renderTemplate('shipstationconnect/settings', [
             'settings' => $this->getSettings()
