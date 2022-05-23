@@ -16,7 +16,7 @@ class Xml extends Component
     const LINEITEM_OPTION_LIMIT = 10;
     const ORDER_FIELD_EVENT = 'orderFieldEvent';
 
-    public function shouldInclude($order)
+    public function shouldInclude($order): bool
     {
         $settings = Plugin::getInstance()->settings;
         $billingSameAsShipping = $settings->billingSameAsShipping;
@@ -34,7 +34,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Orders'
      * @return SimpleXMLElement
      */
-    public function orders(\SimpleXMLElement $xml, $orders, $name='Orders')
+    public function orders(\SimpleXMLElement $xml, $orders, $name='Orders'): \SimpleXMLElement
     {
         $orders_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
         foreach ($orders as $order) {
@@ -54,7 +54,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Order'
      * @return SimpleXMLElement
      */
-    public function order(\SimpleXMLElement $xml, Order $order, $name='Order')
+    public function order(\SimpleXMLElement $xml, Order $order, $name='Order'): \SimpleXMLElement
     {
         $order_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
@@ -140,7 +140,7 @@ class Xml extends Component
      * @param [Order] $order
      * @return null
      */
-    public function shippingMethod(\SimpleXMLElement $order_xml, $order)
+    public function shippingMethod(\SimpleXMLElement $order_xml, $order): void
     {
         $orderFieldEvent = new OrderFieldEvent([
             'field' => OrderFieldEvent::FIELD_SHIPPING_METHOD,
@@ -163,7 +163,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Items'
      * @return SimpleXMLElement
      */
-    public function items(\SimpleXMLElement $xml, $items, $name='Items')
+    public function items(\SimpleXMLElement $xml, $items, $name='Items'): \SimpleXMLElement
     {
         $items_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
         foreach ($items as $item) {
@@ -181,7 +181,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Item'
      * @return SimpleXMLElement
      */
-    public function item(\SimpleXMLElement $xml, LineItem $item, $name='Item')
+    public function item(\SimpleXMLElement $xml, LineItem $item, $name='Item'): \SimpleXMLElement
     {
         $item_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
@@ -248,7 +248,7 @@ class Xml extends Component
      * @param  string                 $name [description]
      * @return [type]                       [description]
      */
-    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item')
+    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item'): ?SimpleXMLElement
     {
         // If no discount was applied, skip this
         if ($order->getTotalDiscount() >= 0) {
@@ -297,7 +297,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Options'
      * @return SimpleXMLElement
      */
-    public function options(\SimpleXMLElement $xml, $options, $name='Options')
+    public function options(\SimpleXMLElement $xml, $options, $name='Options'): \SimpleXMLElement
     {
         $options_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
@@ -331,7 +331,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Customer'
      * @return SimpleXMLElement
      */
-    public function customer(\SimpleXMLElement $xml, Customer $customer, $name='Customer')
+    public function customer(\SimpleXMLElement $xml, Customer $customer, $name='Customer'): \SimpleXMLElement
     {
         $customer_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
@@ -341,7 +341,7 @@ class Xml extends Component
         return $customer_xml;
     }
 
-    private function generateName($firstName, $lastName)
+    private function generateName($firstName, $lastName): ?string
     {
         if (!$firstName && !$lastName) {
             return false;
@@ -366,7 +366,7 @@ class Xml extends Component
      * @param Customer $customer
      * @return SimpleXMLElement, or null if no address exists
      */
-    public function billTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer)
+    public function billTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer): ?SimpleXMLElement
     {
         $billingAddress = $order->getBillingAddress();
         if (!$billingAddress) {
@@ -403,7 +403,7 @@ class Xml extends Component
      * @param Customer $customer
      * @return SimpleXMLElement, or null if no address exists
      */
-    public function shipTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer)
+    public function shipTo(\SimpleXMLElement $customer_xml, Order $order, Customer $customer): ?SimpleXMLElement
     {
         $shippingAddress = $order->getShippingAddress();
         $shipTo_xml = $this->address($customer_xml, $shippingAddress, 'ShipTo');
