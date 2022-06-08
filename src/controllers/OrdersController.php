@@ -50,7 +50,7 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess($store = null, $action = null): void
+    public function actionProcess($store = null, $action = null): mixed
     {
         $request = Craft::$app->request;
         try {
