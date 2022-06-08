@@ -9,6 +9,7 @@ use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
 use craft\db\Query;
 use craft\db\Table;
+use craft\helpers\App;
 use craft\models\MatrixBlockType;
 use yii\web\HttpException;
 use yii\base\ErrorException;
@@ -111,8 +112,8 @@ class OrdersController extends Controller
         }
 
         $settings = $plugin->settings;
-        $expectedUsername = Craft::parseEnv($settings->shipstationUsername);
-        $expectedPassword = Craft::parseEnv($settings->shipstationPassword);
+        $expectedUsername = App::parseEnv($settings->shipstationUsername);
+        $expectedPassword = App::parseEnv($settings->shipstationPassword);
 
         list($username, $password) = Craft::$app->getRequest()->getAuthCredentials();
 
