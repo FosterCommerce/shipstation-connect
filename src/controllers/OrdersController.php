@@ -21,14 +21,14 @@ class OrdersController extends Controller
     const FIND_ORDER_EVENT = 'findOrderEvent';
 
     // Disable CSRF validation for the entire controller
-    public bool $enableCsrfValidation = false;
+    public $enableCsrfValidation = false;
 
-    protected bool $allowAnonymous = true;
+    protected array|int|bool $allowAnonymous = true;
 
     /**
      * @inheritDoc
      */
-    public function init()
+    public function init(): void
     {
         // Allow anonymous access only when this plugin is handling basic
         // authentication, otherwise require auth so that Craft doesn't let
@@ -38,8 +38,10 @@ class OrdersController extends Controller
         if ($isUsingCraftAuth) {
             $this->requirePermission('shipstationconnect-processOrders');
         }
-
-        return parent::init();
+        
+        parent::init();
+        
+        //return parent::init();
     }
 
     /**
