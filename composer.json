@@ -24,7 +24,7 @@
       },
     "require": {
         "craftcms/cms": "^4.0",
-        "craftcms/commerce": "^2.0|^3.0|^4.0"
+        "craftcms/commerce": "^4.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.13"
