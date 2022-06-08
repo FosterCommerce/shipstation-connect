@@ -57,11 +57,20 @@ class Plugin extends \craft\base\Plugin
             }
         );
 
-        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
-            $event->permissions['ShipStation Connect'] = [
-                'shipstationconnect-processOrders' => ['label' => 'Process Orders'],
-            ];
-        });
+        Event::on(
+            UserPermissions::class, 
+            UserPermissions::EVENT_REGISTER_PERMISSIONS, 
+            function(RegisterUserPermissionsEvent $event) {
+                $event->permissions[] = [
+                    'heading' => 'ShipStation Connect',
+                    'permissions' => [
+                        'shipstationconnect-processOrders' => [
+                                'label' => 'Process Orders'
+                        ],
+                    ]
+                ];
+            }
+        );
     }
 
     protected function beforeInstall(): void
