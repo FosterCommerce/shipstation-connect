@@ -248,11 +248,11 @@ class Xml extends Component
      * @param  string                 $name [description]
      * @return [type]                       [description]
      */
-    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item'): ?SimpleXMLElement
+    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item'): mixed
     {
         // If no discount was applied, skip this
         if ($order->getTotalDiscount() >= 0) {
-            return;
+            return null;
         }
 
         $discount_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
