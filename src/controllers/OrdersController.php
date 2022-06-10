@@ -53,7 +53,7 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess($store = null, $action = null): mixed
+    public function actionProcess($store = null, $do = null): mixed
     {
         $request = Craft::$app->request;
         try {
@@ -61,7 +61,7 @@ class OrdersController extends Controller
                 throw new HttpException(401, 'Invalid ShipStation username or password.');
             }
 
-            switch ($action) {
+            switch ($do) {
                 case 'export':
                     return $this->getOrders($store);
                 case 'shipnotify':
@@ -70,10 +70,10 @@ class OrdersController extends Controller
                     throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
             }
         } catch (ErrorException $e) {
-            $this->logException('Error processing action {action}', ['action' => $action], $e);
+            $this->logException('Error processing action {action}', ['action' => $do], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         } catch (HttpException $e) {
-            $action = $action;
+            $action = $do;
             if ($action) {
                 $this->logException('Error processing action {action}', ['action' => $action], $e);
             } else {
