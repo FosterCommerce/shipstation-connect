@@ -42,7 +42,6 @@ class OrdersController extends Controller
         
         parent::init();
         
-        //return parent::init();
     }
 
     /**
