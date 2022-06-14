@@ -54,15 +54,18 @@ class Plugin extends \craft\base\Plugin
         // So we intercept the request and rename that parameter to ssaction IF the request is for one of this plugin's controllers
         Craft::$app->on(Application::EVENT_INIT, function() {
             $request = Craft::$app->request;
-            if(in_array('actions', $request->getSegments()) && in_array('shipstationconnect', $request->getSegments())) {
-                if(array_key_exists('action', $request->getQueryParams())) {
-                   // rename array key to match the action name
-                   $params = $request->getQueryParams();
-                   $params['ssaction'] = $params['action'];
-                   unset($params['action']);
-                   $request->setQueryParams($params);
-                }
-            };
+            if(!$request->isConsoleRequest){
+                if(in_array('actions', $request->getSegments()) && in_array('shipstationconnect', $request->getSegments())) {
+                    if(array_key_exists('action', $request->getQueryParams())) {
+                    // rename array key to match the action name
+                    $params = $request->getQueryParams();
+                    $params['ssaction'] = $params['action'];
+                    unset($params['action']);
+                    $request->setQueryParams($params);
+                    }
+                };
+            }
+          
            
         });
 
