@@ -49,6 +49,9 @@ class Plugin extends \craft\base\Plugin
 
         Craft::$app->view->registerTwigExtension(new IsFieldTypeFilter());
         
+        // Because Shipstation uses a querystring parameter of 'action' in their requests. 
+        // This interferes with Craft's routing system. 
+        // So we intercept the request and rename that parameter to ssaction IF the request is for one of this plugin's controllers
         Craft::$app->on(Application::EVENT_INIT, function() {
             $request = Craft::$app->request;
             if(in_array('actions', $request->getSegments()) && in_array('shipstationconnect', $request->getSegments())) {
