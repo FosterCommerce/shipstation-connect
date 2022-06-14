@@ -57,11 +57,11 @@ class Plugin extends \craft\base\Plugin
             if(!$request->isConsoleRequest){
                 if(in_array('actions', $request->getSegments()) && in_array('shipstationconnect', $request->getSegments())) {
                     if(array_key_exists('action', $request->getQueryParams())) {
-                    // rename array key to match the action name
-                    $params = $request->getQueryParams();
-                    $params['ssaction'] = $params['action'];
-                    unset($params['action']);
-                    $request->setQueryParams($params);
+                        // rename array key to match the action name
+                        $params = $request->getQueryParams();
+                        $params['ssaction'] = $params['action'];
+                        unset($params['action']);
+                        $request->setQueryParams($params);
                     }
                 };
             }
