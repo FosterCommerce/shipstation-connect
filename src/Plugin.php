@@ -4,6 +4,7 @@ namespace fostercommerce\shipstationconnect;
 use Craft;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
+use craft\web\Application;
 use craft\services\UserPermissions;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\base\Model;
@@ -47,6 +48,20 @@ class Plugin extends \craft\base\Plugin
         ]);
 
         Craft::$app->view->registerTwigExtension(new IsFieldTypeFilter());
+        
+        Craft::$app->on(Application::EVENT_INIT, function() {
+            $request = Craft::$app->request;
+            if(in_array('actions', $request->getSegments()) && in_array('shipstationconnect', $request->getSegments())) {
+                if(array_key_exists('action', $request->getQueryParams())) {
+                   // rename array key to match the action name
+                   $params = $request->getQueryParams();
+                   $params['ssaction'] = $params['action'];
+                   unset($params['action']);
+                   $request->setQueryParams($params);
+                }
+            };
+           
+        });
 
         Event::on(
             UrlManager::class,
@@ -56,6 +71,16 @@ class Plugin extends \craft\base\Plugin
                 $event->rules['shipstationconnect/settings/save'] = 'shipstationconnect/settings/save';
             }
         );
+        
+            
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+            function (RegisterUrlRulesEvent $event) {
+                $event->rules['export'] = 'shipstationconnect/orders/export';
+            }
+        );
+    
 
         Event::on(
             UserPermissions::class, 

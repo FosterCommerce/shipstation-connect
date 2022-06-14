@@ -52,7 +52,7 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess($store = null, $do = null): mixed
+    public function actionProcess($store = null, $ssaction = null): mixed
     {
         $request = Craft::$app->request;
         try {
@@ -60,7 +60,7 @@ class OrdersController extends Controller
                 throw new HttpException(401, 'Invalid ShipStation username or password.');
             }
 
-            switch ($do) {
+            switch ($ssaction) {
                 case 'export':
                     return $this->getOrders($store);
                 case 'shipnotify':
@@ -69,19 +69,19 @@ class OrdersController extends Controller
                     throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
             }
         } catch (ErrorException $e) {
-            $this->logException('Error processing action {action}', ['action' => $do], $e);
+            $this->logException('Error processing action {action}', ['action' => $ssaction], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         } catch (HttpException $e) {
-            $action = $do;
-            if ($action) {
-                $this->logException('Error processing action {action}', ['action' => $action], $e);
+           
+            if ($ssaction) {
+                $this->logException('Error processing action {action}', ['action' => $ssaction], $e);
             } else {
                 $this->logException('An action is required. Supported actions: export, shipnotify.');
             }
 
             return $this->asErrorJson($e->getMessage())->setStatusCode($e->statusCode);
         } catch (\Exception $e) {
-            $this->logException('Error processing action {action}', ['action' => $action], $e);
+            $this->logException('Error processing action {action}', ['action' => $ssaction], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         }
     }
