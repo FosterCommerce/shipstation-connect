@@ -74,7 +74,7 @@ class OrdersController extends Controller
         } catch (HttpException $e) {
            
             if ($action) {
-                $this->logException('Error processing action {action}', ['action' => $ssaction], $e);
+                $this->logException('Error processing action {action}', ['action' => $action], $e);
             } else {
                 $this->logException('An action is required. Supported actions: export, shipnotify.');
             }
