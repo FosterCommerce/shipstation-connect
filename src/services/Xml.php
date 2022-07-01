@@ -8,7 +8,7 @@ use craft\commerce\elements\Order;
 use craft\commerce\models\LineItem;
 use craft\commerce\models\Customer;
 use craft\commerce\models\Address;
-use craft\models\User;
+use craft\elements\User;
 use yii\base\Component;
 use yii\base\Event;
 
