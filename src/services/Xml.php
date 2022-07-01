@@ -8,7 +8,6 @@ use craft\commerce\elements\Order;
 use craft\commerce\models\LineItem;
 use craft\commerce\models\Customer;
 use craft\commerce\models\Address;
-use craft\elements\User;
 use yii\base\Component;
 use yii\base\Event;
 
@@ -332,7 +331,7 @@ class Xml extends Component
      * @param String $name the name of the child node, default 'Customer'
      * @return SimpleXMLElement
      */
-    public function customer(\SimpleXMLElement $xml, User $customer, $name='Customer'): \SimpleXMLElement
+    public function customer(\SimpleXMLElement $xml, Customer $customer, $name='Customer'): \SimpleXMLElement
     {
         $customer_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
 
