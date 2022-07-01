@@ -52,6 +52,7 @@ class Plugin extends \craft\base\Plugin
         // Because Shipstation uses a querystring parameter of 'action' in their requests. 
         // This interferes with Craft's routing system. 
         // So we intercept the request and rename that parameter to ssaction IF the request is for one of this plugin's controllers
+        /*
         Craft::$app->on(Application::EVENT_INIT, function() {
             $request = Craft::$app->request;
             if(!$request->isConsoleRequest){
@@ -68,6 +69,7 @@ class Plugin extends \craft\base\Plugin
           
            
         });
+        */
 
         Event::on(
             UrlManager::class,
