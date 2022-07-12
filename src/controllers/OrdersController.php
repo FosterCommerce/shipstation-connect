@@ -10,6 +10,7 @@ use craft\commerce\elements\Order;
 use craft\db\Query;
 use craft\db\Table;
 use craft\helpers\App;
+use craft\web\Response;
 use craft\models\MatrixBlockType;
 use yii\web\HttpException;
 use yii\base\ErrorException;
@@ -238,7 +239,7 @@ class OrdersController extends Controller
      *
      * @throws ErrorException if the order fails to save
      */
-    protected function postShipment(): ?string
+    protected function postShipment(): null|string|Response
     {
         $order = $this->orderFromParams();
 
