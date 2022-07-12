@@ -15,6 +15,7 @@ use craft\models\MatrixBlockType;
 use yii\web\HttpException;
 use yii\base\ErrorException;
 use yii\base\Event;
+use yii\web\Response as YiiResponse;
 use fostercommerce\shipstationconnect\Plugin;
 use fostercommerce\shipstationconnect\events\FindOrderEvent;
 
@@ -53,7 +54,7 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess($store = null, $action = null): mixed
+    public function actionProcess($store = null, $action = null): null|string|Response|YiiResponse|SimpleXMLElement
     {
         $request = Craft::$app->request;
         try {

@@ -250,7 +250,7 @@ class Xml extends Component
      * @param  string                 $name [description]
      * @return [type]                       [description]
      */
-    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item'): mixed
+    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item'): null|\SimpleXMLElement
     {
         // If no discount was applied, skip this
         if ($order->getTotalDiscount() >= 0) {
