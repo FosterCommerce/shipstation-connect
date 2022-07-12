@@ -336,9 +336,9 @@ class OrdersController extends Controller
      *       return to ShipStation as part of the getOrders() method above.
      *
      * @throws HttpException, 404 if not found, 406 if order number is invalid
-     * @return Commerce_Order
+     * @return Order
      */
-    protected function orderFromParams(): Commerce_Order
+    protected function orderFromParams(): Order
     {
         $request = Craft::$app->getRequest();
         if ($orderNumber = $request->getParam('order_number')) {
