@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 - 2022-07-19
+
+### Added
+
+- Support for Craft 4/Commerce 4. Note that development for Craft 3 has stopped at 1.3.7.
+
 ## 1.3.7 - 2021-12-01
 
 ### Fixed

@@ -9,10 +9,13 @@ use craft\commerce\Plugin as CommercePlugin;
 use craft\commerce\elements\Order;
 use craft\db\Query;
 use craft\db\Table;
+use craft\helpers\App;
+use craft\web\Response;
 use craft\models\MatrixBlockType;
 use yii\web\HttpException;
 use yii\base\ErrorException;
 use yii\base\Event;
+use yii\web\Response as YiiResponse;
 use fostercommerce\shipstationconnect\Plugin;
 use fostercommerce\shipstationconnect\events\FindOrderEvent;
 
@@ -23,12 +26,12 @@ class OrdersController extends Controller
     // Disable CSRF validation for the entire controller
     public $enableCsrfValidation = false;
 
-    protected $allowAnonymous = true;
+    protected array|int|bool $allowAnonymous = true;
 
     /**
      * @inheritDoc
      */
-    public function init()
+    public function init(): void
     {
         // Allow anonymous access only when this plugin is handling basic
         // authentication, otherwise require auth so that Craft doesn't let
@@ -38,8 +41,9 @@ class OrdersController extends Controller
         if ($isUsingCraftAuth) {
             $this->requirePermission('shipstationconnect-processOrders');
         }
-
-        return parent::init();
+        
+        parent::init();
+        
     }
 
     /**
@@ -50,7 +54,7 @@ class OrdersController extends Controller
      * @param array $variables, containing key 'fulfillmentService'
      * @throws HttpException for malformed requests
      */
-    public function actionProcess($store = null, $action = null)
+    public function actionProcess($store = null, $action = null): null|string|Response|YiiResponse|SimpleXMLElement
     {
         $request = Craft::$app->request;
         try {
@@ -70,7 +74,7 @@ class OrdersController extends Controller
             $this->logException('Error processing action {action}', ['action' => $action], $e);
             return $this->asErrorJson($e->getMessage())->setStatusCode(500);
         } catch (HttpException $e) {
-            $action = $action;
+           
             if ($action) {
                 $this->logException('Error processing action {action}', ['action' => $action], $e);
             } else {
@@ -84,7 +88,7 @@ class OrdersController extends Controller
         }
     }
 
-    private function logException($msg, $params = [], $e = null)
+    private function logException($msg, $params = [], $e = null): void
     {
         Craft::error(
             Craft::t('shipstationconnect', $msg, $params),
@@ -101,7 +105,7 @@ class OrdersController extends Controller
      *
      * @return bool, true if successfully authenticated or false otherwise
      */
-    protected function authenticate()
+    protected function authenticate(): bool
     {
         $plugin = Plugin::getInstance();
         if ($plugin->isAuthHandledByCraft()) {
@@ -109,8 +113,8 @@ class OrdersController extends Controller
         }
 
         $settings = $plugin->settings;
-        $expectedUsername = Craft::parseEnv($settings->shipstationUsername);
-        $expectedPassword = Craft::parseEnv($settings->shipstationPassword);
+        $expectedUsername = App::parseEnv($settings->shipstationUsername);
+        $expectedPassword = App::parseEnv($settings->shipstationPassword);
 
         list($username, $password) = Craft::$app->getRequest()->getAuthCredentials();
 
@@ -122,7 +126,7 @@ class OrdersController extends Controller
      *
      * @return SimpleXMLElement Orders XML
      */
-    protected function getOrders($store = null)
+    protected function getOrders($store = null): SimpleXMLElement
     {
         $query = Order::find();
 
@@ -160,7 +164,7 @@ class OrdersController extends Controller
      * @param ElementCriteriaModel, a REFERENCE to the criteria instance
      * @return Int total number of pages
      */
-    protected function paginateOrders(&$query)
+    protected function paginateOrders(&$query): int
     {
         $pageSize = Plugin::getInstance()->settings->ordersPageSize;
         if (!is_numeric($pageSize) || $pageSize < 1) {
@@ -185,7 +189,7 @@ class OrdersController extends Controller
      * @param String $field_name, the name of the field in GET params
      * @return String|null the formatted date string
      */
-    protected function parseDate($field_name)
+    protected function parseDate($field_name): ?string
     {
         $request = Craft::$app->getRequest();
         if ($date_raw = $request->getParam($field_name)) {
@@ -201,7 +205,7 @@ class OrdersController extends Controller
         return null;
     }
 
-    private function getBlockTypeByHandle($fieldId, $handle)
+    private function getBlockTypeByHandle($fieldId, $handle): ?MatrixBlockType
     {
         $result = (new Query())
             ->select([
@@ -236,7 +240,7 @@ class OrdersController extends Controller
      *
      * @throws ErrorException if the order fails to save
      */
-    protected function postShipment()
+    protected function postShipment(): null|string|Response
     {
         $order = $this->orderFromParams();
 
@@ -296,7 +300,7 @@ class OrdersController extends Controller
         }
     }
 
-    private function validateShippingInformation($info)
+    private function validateShippingInformation($info): bool
     {
         // Requires at least one value
         foreach ($info as $key => $value) {
@@ -317,7 +321,7 @@ class OrdersController extends Controller
      *
      * @return array
      */
-    protected function getShippingInformationFromParams()
+    protected function getShippingInformationFromParams(): array
     {
         $request = Craft::$app->getRequest();
         return [
@@ -334,9 +338,9 @@ class OrdersController extends Controller
      *       return to ShipStation as part of the getOrders() method above.
      *
      * @throws HttpException, 404 if not found, 406 if order number is invalid
-     * @return Commerce_Order
+     * @return Order
      */
-    protected function orderFromParams()
+    protected function orderFromParams(): Order
     {
         $request = Craft::$app->getRequest();
         if ($orderNumber = $request->getParam('order_number')) {
@@ -365,7 +369,7 @@ class OrdersController extends Controller
      * @param SimpleXMLElement $xml
      * @return null
      */
-    protected function returnXML(\SimpleXMLElement $xml)
+    protected function returnXML(\SimpleXMLElement $xml): void
     {
         header("Content-type: text/xml");
         // Output it into a buffer, in case TasksService wants to close the connection prematurely

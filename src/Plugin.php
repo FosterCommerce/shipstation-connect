@@ -4,19 +4,42 @@ namespace fostercommerce\shipstationconnect;
 use Craft;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
+use craft\web\Application;
 use craft\services\UserPermissions;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\base\Model;
 use yii\base\Event;
 use yii\base\Exception;
 use fostercommerce\shipstationconnect\web\twig\filters\IsFieldTypeFilter;
 
 class Plugin extends \craft\base\Plugin
 {
-    public $hasCpSettings = true;
-    public $hasCpSection = true;
-    public $schemaVersion = '1.0.1';
+    /**
+     * @var		bool	$hasCpSettings
+     */
+    public bool $hasCpSettings = true;
+    
+    /**
+     * @var		bool	$hasCpSection
+     */
+    public bool $hasCpSection = true;
+    
+    /**
+     * @var		string	$schemaVersion
+     */
+    public string $schemaVersion = '1.0.1';
 
-    public function init()
+    
+    /**
+     * init.
+     *
+     * @author	Unknown
+     * @since	v0.0.1
+     * @version	v1.0.0	Monday, May 23rd, 2022.
+     * @access	public
+     * @return	void
+     */
+    public function init(): void
     {
         parent::init();
 
@@ -25,6 +48,28 @@ class Plugin extends \craft\base\Plugin
         ]);
 
         Craft::$app->view->registerTwigExtension(new IsFieldTypeFilter());
+        
+        // Because Shipstation uses a querystring parameter of 'action' in their requests. 
+        // This interferes with Craft's routing system. 
+        // So we intercept the request and rename that parameter to ssaction IF the request is for one of this plugin's controllers
+        /*
+        Craft::$app->on(Application::EVENT_INIT, function() {
+            $request = Craft::$app->request;
+            if(!$request->isConsoleRequest){
+                if(in_array('actions', $request->getSegments()) && in_array('shipstationconnect', $request->getSegments())) {
+                    if(array_key_exists('action', $request->getQueryParams())) {
+                        // rename array key to match the action name
+                        $params = $request->getQueryParams();
+                        $params['ssaction'] = $params['action'];
+                        unset($params['action']);
+                        $request->setQueryParams($params);
+                    }
+                };
+            }
+          
+           
+        });
+        */
 
         Event::on(
             UrlManager::class,
@@ -34,22 +79,41 @@ class Plugin extends \craft\base\Plugin
                 $event->rules['shipstationconnect/settings/save'] = 'shipstationconnect/settings/save';
             }
         );
+        
+            
+        Event::on(
+            UrlManager::class,
+            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+            function (RegisterUrlRulesEvent $event) {
+                $event->rules['export'] = 'shipstationconnect/orders/export';
+            }
+        );
+    
 
-        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
-            $event->permissions['ShipStation Connect'] = [
-                'shipstationconnect-processOrders' => ['label' => 'Process Orders'],
-            ];
-        });
+        Event::on(
+            UserPermissions::class, 
+            UserPermissions::EVENT_REGISTER_PERMISSIONS, 
+            function(RegisterUserPermissionsEvent $event) {
+                $event->permissions[] = [
+                    'heading' => 'ShipStation Connect',
+                    'permissions' => [
+                        'shipstationconnect-processOrders' => [
+                                'label' => 'Process Orders'
+                        ],
+                    ]
+                ];
+            }
+        );
     }
 
-    protected function beforeInstall(): bool
+    protected function beforeInstall(): void
     {
         if (!Craft::$app->plugins->isPluginInstalled('commerce')) {
             Craft::error(Craft::t(
                 'shipstationconnect',
                 'Failed to install. Craft Commerce is required.'
             ));
-            return false;
+            // return false;
         }
 
         if (!Craft::$app->plugins->isPluginEnabled('commerce')) {
@@ -57,13 +121,11 @@ class Plugin extends \craft\base\Plugin
                 'shipstationconnect',
                 'Failed to install. Craft Commerce is required.'
             ));
-            return false;
+           // return false;
         }
-
-        return true;
     }
 
-    public function getCpNavItem()
+    public function getCpNavItem(): ?array
     {
         $item = parent::getCpNavItem();
 
@@ -75,12 +137,12 @@ class Plugin extends \craft\base\Plugin
         return $item;
     }
 
-    protected function createSettingsModel()
+    protected function createSettingsModel(): ?Model
     {
         return new \fostercommerce\shipstationconnect\models\Settings();
     }
 
-    public function settingsHtml()
+    public function settingsHtml(): ?string
     {
         return Craft::$app->getView()->renderTemplate('shipstationconnect/settings', [
             'settings' => $this->getSettings()

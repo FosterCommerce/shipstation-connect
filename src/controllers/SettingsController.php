@@ -7,10 +7,12 @@ use craft\db\Query;
 use fostercommerce\shipstationconnect\Plugin;
 use fostercommerce\shipstationconnect\models\Settings;
 
+use yii\web\Response;
+
 class SettingsController extends Controller
 {
 
-    public function actionIndex()
+    public function actionIndex(): Response
     {
         $plugin = Plugin::getInstance();
         return $this->renderTemplate("shipstationconnect/settings/index", [
@@ -19,7 +21,7 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function actionSave()
+    public function actionSave(): Response
     {
         $this->requirePostRequest();
         $postData = Craft::$app->getRequest()->getBodyParam('settings');
