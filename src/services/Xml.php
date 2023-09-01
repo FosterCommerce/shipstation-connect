@@ -150,8 +150,8 @@ class Xml extends Component
         ]);
         Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
 
-        if (!$orderFieldEvent->value && $shippingMethod = $order->getShippingMethod()) {
-            $orderFieldEvent->value = $shippingMethod->handle;
+        if (!$orderFieldEvent->value) {
+            $orderFieldEvent->value = $order->shippingMethodHandle;
         }
 
         $this->addChildWithCDATA($order_xml, 'ShippingMethod', $orderFieldEvent->value);
