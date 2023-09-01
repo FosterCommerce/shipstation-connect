@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.2 - 2023-09-01
+
+### Fixed
+
+- Fixed issue where custom shipping methods were not showing up in generated XML ([#54](https://github.com/FosterCommerce/shipstation-connect/pull/54))
+
 ## 2.0.1 - 2022-07-19
 
 ### Added
