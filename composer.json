@@ -29,7 +29,8 @@
   "require-dev": {
     "roave/security-advisories": "dev-latest",
     "craftcms/phpstan": "dev-main",
-    "craftcms/ecs": "dev-main"
+    "craftcms/ecs": "dev-main",
+    "craftcms/rector": "dev-main"
   },
   "extra": {
     "handle": "shipstationconnect",
@@ -41,5 +42,12 @@
       "yiisoft/yii2-composer": true,
       "craftcms/plugin-installer": true
     }
+  },
+  "scripts": {
+    "phpstan": "phpstan --memory-limit=1G",
+    "ecs-check": "ecs check --ansi --memory-limit=1G",
+    "ecs-fix": "ecs check --ansi --fix --memory-limit=1G",
+    "rector": "rector process",
+    "rector-dry-run": "rector process --dry-run"
   }
 }
