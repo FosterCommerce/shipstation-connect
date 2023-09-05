@@ -28,8 +28,8 @@
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
-    "friendsofphp/php-cs-fixer": "^2.13",
-    "craftcms/phpstan": "dev-main"
+    "craftcms/phpstan": "dev-main",
+    "craftcms/ecs": "dev-main"
   },
   "extra": {
     "handle": "shipstationconnect",
