@@ -435,11 +435,10 @@ class Xml extends Component
     public function address(\SimpleXMLElement $xml, Address $address=null, $name='Address')
     {
         $address_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-
+        $settings =  Plugin::getInstance()->settings;
         if (!is_null($address)) {
             $address_mapping = [
                 'Company' => 'organization',
-                //'Phone' => 'phone',
                 'Address1' => 'addressLine1',
                 'Address2' => 'addressLine2',
                 'City' => 'locality',
@@ -452,8 +451,13 @@ class Xml extends Component
                     'cdata' => false,
                 ]
                 */
-                'Country' => 'countryCode'
+                'Country' => 'countryCode',
             ];
+            
+            if($settings->phoneNumberFieldHandle != '' && $settings->phoneNumberFieldHandle != null){
+                $address_mapping['Phone'] = $settings->phoneNumberFieldHandle;
+            }
+
             $this->mapCraftModel($address_xml, $address_mapping, $address);
         }
 
