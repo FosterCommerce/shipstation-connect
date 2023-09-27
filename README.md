@@ -1,11 +1,11 @@
 ![Screenshot](resources/img/new-plugin-header.png)
-# ShipStation Connect for Craft CMS 3 and Commerce 2/3
+# ShipStation Connect for Craft CMS 4 and Commerce 4
 
 A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
 ## Requirements
 
-This plugin requires Craft CMS 3 and Commerce 2 or later
+This plugin requires Craft CMS 4 and Commerce 4 or later
 
 ## Installation
 
@@ -114,6 +114,13 @@ When a shipping notification is received for an order from ShipStation, the
 plugin will add the shipping information to the Shipping Information field on
 the order and set the order to the Craft status paired with your ShipStation
 stores Shipped status.
+
+
+## Adding phone numbers to addresses sent to Shipstation
+
+Addresses are now part of Craft rather than Commerce, and the Phone number field was dropped from the address model. It is now necessary to add a custom field to the Address fields to store phone numbers.
+
+The plugin setting gives you the option to set the field handle that you are using for phone numbers. The contents of this field will then be sent to Shipstation within the address portions of the order data.
 
 ## Custom Fields
 
