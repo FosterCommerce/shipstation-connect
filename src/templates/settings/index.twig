@@ -220,4 +220,12 @@
       checked: settings.billingSameAsShipping,
       errors: settings.getErrors('billingSameAsShipping')
   }) }}
+
+  {{ forms.textField({
+      label: 'Phone number field handle'|t('shipstationconnect'),
+      instructions: ''|t('shipstationconnect'),
+      name: 'settings[phoneNumberFieldHandle]',
+      value: settings.phoneNumberFieldHandle,
+      errors: settings.getErrors('phoneNumberFieldHandle'),
+  }) }}
 {% endset %}
