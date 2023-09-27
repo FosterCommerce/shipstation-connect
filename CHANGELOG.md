@@ -1,5 +1,9 @@
 # Changelog
+## 2.0.2 - 2023-11-27
 
+### Added
+
+- Support for setting a custom phone number field that will be included within the address info sent to Shipstation
 ## 2.0.1 - 2022-07-19
 
 ### Added
