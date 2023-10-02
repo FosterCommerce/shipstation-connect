@@ -351,9 +351,9 @@ class Xml extends Component
 
         $names = [$firstName, $lastName];
         $names = array_filter(
-            $names, 
-            function($name) { 
-                return $name !== null && $name !== ''; 
+            $names,
+            function($name) {
+                return $name !== null && $name !== '';
             }
         );
 
@@ -453,8 +453,8 @@ class Xml extends Component
                 */
                 'Country' => 'countryCode',
             ];
-            
-            if($settings->phoneNumberFieldHandle != '' && $settings->phoneNumberFieldHandle != null){
+
+            if(!empty($settings->phoneNumberFieldHandle)){
                 $address_mapping['Phone'] = $settings->phoneNumberFieldHandle;
             }
 
