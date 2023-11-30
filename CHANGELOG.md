@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.8 - 2023-11-30
+
+- Removed unnecessary usage of deprecated function `getShippingMethod` [[#58](https://github.com/FosterCommerce/shipstation-connect/pull/58)].
+
 ## 1.3.7 - 2021-12-01
 
 ### Fixed

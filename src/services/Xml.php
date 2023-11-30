@@ -148,8 +148,8 @@ class Xml extends Component
         ]);
         Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
 
-        if (!$orderFieldEvent->value && $shippingMethod = $order->getShippingMethod()) {
-            $orderFieldEvent->value = $shippingMethod->handle;
+        if (!$orderFieldEvent->value) {
+            $orderFieldEvent->value = $order->shippingMethodHandle;
         }
 
         $this->addChildWithCDATA($order_xml, 'ShippingMethod', $orderFieldEvent->value);
@@ -349,9 +349,9 @@ class Xml extends Component
 
         $names = [$firstName, $lastName];
         $names = array_filter(
-            $names, 
-            function($name) { 
-                return $name !== null && $name !== ''; 
+            $names,
+            function($name) {
+                return $name !== null && $name !== '';
             }
         );
 
