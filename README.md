@@ -47,7 +47,7 @@ in Craft.
 ### Username/Password
 
 ShipStation allows you to set a custom username and password combination for a
-connected store. This combination should match the values stored in the 
+connected store. This combination should match the values stored in the
 ShipStation Connnect settings view in your Craft control panel.
 
 **Note:** These are *not* your ShipStation credentials, nor your Craft user
