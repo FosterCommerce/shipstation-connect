@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.4 - 2024-03-22
+
+- Update plugin branding
+
 ## 2.0.3 - 2023-09-27
 
 ### Added

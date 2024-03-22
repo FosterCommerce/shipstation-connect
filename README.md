@@ -1,4 +1,4 @@
-![Screenshot](resources/img/new-plugin-header.png)
+![Header](resources/img/header.png)
 # ShipStation Connect for Craft CMS 4 and Commerce 4
 
 A plugin for Craft Commerce that integrates with a ShipStation Custom Store.

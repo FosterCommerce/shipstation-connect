@@ -1,21 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="750px" height="750px" viewBox="-403.4 -77 750 750" style="enable-background:new -403.4 -77 750 750;"
-	 xml:space="preserve">
-<style type="text/css">
-	.st0{fill:#1E2733;}
-	.st1{fill:#D9AF7D;}
-</style>
-<circle class="st0" cx="-28.5" cy="298" r="375"/>
-<g id="Homepage-Design-Version-A">
-	<g id="Ultra-Wide-_x28_nh_x29_" transform="translate(-389.000000, -538.000000)">
-		<path id="Fill-10" class="st1" d="M360.6,894.5c-32.3,0-58.5-26.3-58.5-58.5c0-32.3,26.2-58.5,58.5-58.5s58.5,26.2,58.5,58.5
-			C419.1,868.2,392.9,894.5,360.6,894.5z M535.6,862.6v-53.3l-46.5-7c-3.1-11.7-7.7-22.9-13.8-33.4l27.9-37.9l-37.7-37.7l-37.8,27.9
-			c-10.5-6.1-21.7-10.8-33.4-13.8l-7-46.5H334l-7,46.5c-11.7,3.1-22.9,7.7-33.4,13.8l-37.8-27.9L218,731.1l27.9,37.9
-			c-6.1,10.4-10.7,21.6-13.8,33.4l-46.5,7v53.3l46.5,7c3.1,11.8,7.7,23,13.8,33.4L218,940.9l37.7,37.7l37.8-27.9
-			c10.5,6.1,21.7,10.8,33.4,13.8l7,46.5h53.3l7-46.5c11.7-3,22.9-7.7,33.4-13.8l37.9,27.9l37.7-37.7L475.3,903
-			c6.1-10.4,10.8-21.6,13.8-33.4L535.6,862.6z"/>
-	</g>
-</g>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="e" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <defs>
+    <style>.shipstation_logo_j{fill:#fff;}.shipstation_logo_j,.shipstation_logo_k{stroke-width:0px;}.shipstation_logo_k{fill:url(#shipstation_logo_f);}</style>
+    <radialGradient id="shipstation_logo_f" cx="970.38" cy="921.11" fx="970.38" fy="921.11" r="1225.76" gradientUnits="userSpaceOnUse"><stop offset=".03" stop-color="#bd9664"/><stop offset=".12" stop-color="#95836a"/><stop offset=".23" stop-color="#6c6f71"/><stop offset=".31" stop-color="#526375"/><stop offset=".36" stop-color="#495f77"/><stop offset=".42" stop-color="#3f5267"/><stop offset=".54" stop-color="#27323f"/><stop offset=".61" stop-color="#171d25"/></radialGradient>
+  </defs>
+  <rect class="shipstation_logo_k" x="38.38" y="38.38" width="923.24" height="923.24" rx="255.52" ry="255.52"/>
+  <path class="shipstation_logo_j" d="M544.74,793.93h-89.48l-11.71-77.77c-20.07-5.02-38.47-12.54-56.03-23.41l-63.55,46.83-63.55-63.55,46.83-63.55c-10.03-17.56-18.4-35.96-23.41-56.03l-77.77-11.71v-89.48l77.77-11.71c5.02-20.07,13.38-38.47,23.41-56.03l-46.83-63.55,63.55-63.55,63.55,46.83c17.56-10.03,35.96-18.4,56.03-23.41l11.71-77.77h89.48l11.71,77.77c19.23,5.02,38.47,12.54,56.03,23.41l63.55-46.83,63.55,63.55-46.83,63.55c10.03,17.56,18.4,35.96,23.41,56.03l77.77,11.71v89.48l-77.77,11.71c-5.02,19.23-12.54,38.47-23.41,56.03l46.83,63.55-63.55,63.55-63.55-46.83c-17.56,10.03-36.79,18.4-56.03,23.41l-11.71,77.77ZM499.58,402.58c-54.35,0-97.84,44.32-97.84,97.84s44.32,97.84,97.84,97.84,97.84-44.32,97.84-97.84c0-53.52-43.48-97.84-97.84-97.84"/>
 </svg>
