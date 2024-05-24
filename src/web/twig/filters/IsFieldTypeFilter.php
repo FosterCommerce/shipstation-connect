@@ -1,42 +1,52 @@
 <?php
 namespace fostercommerce\shipstationconnect\web\twig\filters;
 
-use Craft;
 use craft\base\Field;
+use craft\fields\Assets;
 use craft\fields\Matrix;
 use craft\fields\Dropdown;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
+use Twig\TwigFunction;
 
-class IsFieldTypeFilter extends \Twig_Extension
+class IsFieldTypeFilter extends AbstractExtension
 {
-    public function getName()
+    public function getName(): string
     {
         return 'IsMatrixFilter';
     }
 
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
-            new \Twig_SimpleFilter('is_matrix', [$this, 'is_matrix']),
-            new \Twig_SimpleFilter('is_dropdown', [$this, 'is_dropdown']),
+            new TwigFilter('is_matrix', [$this, 'isMatrixField']),
+            new TwigFilter('is_dropdown', [$this, 'isDropdownField']),
+            new TwigFilter('is_asset', [$this, 'isAssetField']),
         ];
     }
 
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
-            new \Twig_SimpleFunction('is_matrix', [$this, 'is_matrix']),
-            new \Twig_SimpleFunction('is_dropdown', [$this, 'is_dropdown']),
+            new TwigFunction('is_matrix', [$this, 'isMatrixField']),
+            new TwigFunction('is_dropdown', [$this, 'isDropdownField']),
+            new TwigFunction('is_asset', [$this, 'isAssetField']),
         ];
     }
 
-    public function is_matrix(Field $field)
+    public function isMatrixField(Field $field)
     {
         return $field instanceof Matrix;
     }
 
-    public function is_dropdown(Field $field)
+    public function isDropdownField(Field $field)
     {
         return $field instanceof Dropdown;
+    }
+
+    public function isAssetField(Field $field)
+    {
+        return $field instanceof Assets;
     }
 }
 
