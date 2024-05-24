@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.3.8 - 2023-11-30
+## 1.5.0 - 2024-05-24
+
+- Support a single asset field for fetching a product image for order line items.
+
+## 1.4.0 - 2023-11-30
 
 - Removed unnecessary usage of deprecated function `getShippingMethod` [[#58](https://github.com/FosterCommerce/shipstation-connect/pull/58)].
 
