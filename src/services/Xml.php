@@ -226,6 +226,10 @@ class Xml extends Component
                     $purchasable = $item->getPurchasable();
                     if ($productImagesHandle !== null && $purchasable !== null) {
                         $assetQuery = $purchasable->{$productImagesHandle};
+                        if ($assetQuery === null) {
+                            // Fallback to the product if the variant does not have an asset
+                            $assetQuery = $purchasable->product->{$productImagesHandle};
+                        }
                         if ($assetQuery !== null) {
                             $asset = $assetQuery->one();
                             if ($asset !== null) {
