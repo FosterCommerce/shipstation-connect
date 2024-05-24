@@ -38,7 +38,7 @@
           Other ShipStation statuses can be left as is, as Commerce doesn't have any corresponding statuses. See below for the statuses currently enabled.
       </p>
   </div>
-  {% set fields = craft.app.fields.allFields %}
+	{% set fields = craft.app.fields.allFields %}
   {% set storeFields = fields|filter(f => is_dropdown(f))|map(f => { label: f.name, value: f.handle }) %}
   {% set storeFields = [{ label: 'Default', value: '' }]|merge(storeFields) %}
 
@@ -83,7 +83,7 @@
   {% endif %}
   {% if isUsingCraftAuth %}
   <p class="error">
-    This site is using Craft's enableBasicHttpAuth feature. A dedicated user 
+    This site is using Craft's enableBasicHttpAuth feature. A dedicated user
     should be added to access ShipStation Connect.
   </p>
   {% endif %}
@@ -148,6 +148,14 @@
       </ul>
   </div>
 
+	{% set assetFields = [{label: 'None', value: null}]|merge(fields|filter(f => is_asset(f))|map(f => { label: f.name, value: f.handle })) %}
+	{{ forms.selectField({
+		label: "Product Images Field Handle"|t('shipstationconnect'),
+		name: 'settings[productImagesHandle]',
+		value: settings.productImagesHandle,
+		options: assetFields
+	}) }}
+
   <h2>Shipped Order Status</h2>
 
   {{ forms.selectField({
@@ -159,10 +167,9 @@
 
   <h2>Shipping Info Matrix Field</h2>
 
-  {% set fields = craft.app.fields.allFields %}
-  {% set fields = fields|filter(f => is_matrix(f))|map(f => { label: f.name, value: f.handle }) %}
+  {% set matrixFields = fields|filter(f => is_matrix(f))|map(f => { label: f.name, value: f.handle }) %}
 
-  {% if fields|length == 0 or settings.matrixFieldHandle is null or settings.matrixFieldHandle|length == 0 %}
+  {% if matrixFields|length == 0 or settings.matrixFieldHandle is null or settings.matrixFieldHandle|length == 0 %}
   <div class="error">
     A matrix field with a block type and the following fields is required:
     <ul style="list-style:inherit">
@@ -177,7 +184,7 @@
       label: "Matrix Field Handle"|t('shipstationconnect'),
       name: 'settings[matrixFieldHandle]',
       value: settings.matrixFieldHandle,
-      options: fields
+      options: matrixFields
   }) }}
 
   {{ forms.textField({

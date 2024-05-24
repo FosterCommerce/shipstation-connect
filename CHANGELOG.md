@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0 - 2024-05-24
+
+### Added
+
+- Support for a single asset field to fetch a product image for order line items during order export.
+
 ## 2.0.4 - 2024-03-22
 
 - Update plugin branding
@@ -15,6 +21,7 @@
 ### Fixed
 
 - Fixed issue where custom shipping methods were not showing up in generated XML ([#54](https://github.com/FosterCommerce/shipstation-connect/pull/54))
+- 
 ## 2.0.1 - 2022-07-19
 
 ### Added

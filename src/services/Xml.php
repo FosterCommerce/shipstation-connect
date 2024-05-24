@@ -1,6 +1,7 @@
 <?php
 namespace fostercommerce\shipstationconnect\services;
 
+use craft\helpers\UrlHelper;
 use fostercommerce\shipstationconnect\Plugin;
 use fostercommerce\shipstationconnect\events\OrderFieldEvent;
 use craft\commerce\Plugin as CommercePlugin;
@@ -218,6 +219,28 @@ class Xml extends Component
             'UnitPrice' => [
                 'callback' => function ($item) {
                     return round($item->salePrice, 2);
+                },
+                'cdata' => false,
+            ],
+            'ImageUrl' => [
+                'callback' => function ($item) {
+                    $productImagesHandle = Plugin::getInstance()->getSettings()->productImagesHandle;
+                    $purchasable = $item->getPurchasable();
+                    if ($productImagesHandle !== null && $purchasable !== null) {
+                        $assetQuery = $purchasable->{$productImagesHandle};
+                        if ($assetQuery === null) {
+                            // Fallback to the product if the variant does not have an asset
+                            $assetQuery = $purchasable->product->{$productImagesHandle};
+                        }
+                        if ($assetQuery !== null) {
+                            $asset = $assetQuery->one();
+                            if ($asset !== null) {
+                                return UrlHelper::siteUrl($asset->getUrl());
+                            }
+                        }
+                    }
+
+                    return null;
                 },
                 'cdata' => false,
             ]
@@ -483,7 +506,7 @@ class Xml extends Component
             [OrderFieldEvent::FIELD_GIFT_MESSAGE, 1000],
         ];
 
-        foreach ($customFields as list($fieldName, $charLimit)) {
+        foreach ($customFields as [$fieldName, $charLimit]) {
             $orderFieldEvent = new OrderFieldEvent([
                 'field' => $fieldName,
                 'order' => $order,
