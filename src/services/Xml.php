@@ -1,628 +1,654 @@
 <?php
+
 namespace fostercommerce\shipstationconnect\services;
 
-use craft\helpers\UrlHelper;
-use fostercommerce\shipstationconnect\Plugin;
-use fostercommerce\shipstationconnect\events\OrderFieldEvent;
-use craft\commerce\Plugin as CommercePlugin;
+use craft\base\Model as BaseModel;
 use craft\commerce\elements\Order;
 use craft\commerce\models\LineItem;
-//use craft\commerce\models\Customer;
-//use craft\commerce\models\Address;
-use craft\elements\User;
+use craft\commerce\Plugin as CommercePlugin;
 use craft\elements\Address;
+use craft\elements\User;
+use craft\helpers\UrlHelper;
+use fostercommerce\shipstationconnect\events\OrderFieldEvent;
+use fostercommerce\shipstationconnect\Plugin;
+use SimpleXMLElement;
 use yii\base\Component;
 use yii\base\Event;
+use yii\base\InvalidConfigException;
 
 class Xml extends Component
 {
-    const LINEITEM_OPTION_LIMIT = 10;
-    const ORDER_FIELD_EVENT = 'orderFieldEvent';
-
-    public function shouldInclude($order): bool
-    {
-        $settings = Plugin::getInstance()->settings;
-        $billingSameAsShipping = $settings->billingSameAsShipping;
-        return $order->getShippingAddress()
-            && $order->getOrderStatus()
-            && ($billingSameAsShipping || $order->getBillingAddress())
-            && $order->getCustomer();
-    }
-
-    /**
-     * Build an XML document given an array of orders
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param [Order] $orders
-     * @param String $name the name of the child node, default 'Orders'
-     * @return SimpleXMLElement
-     */
-    public function orders(\SimpleXMLElement $xml, $orders, $name='Orders'): \SimpleXMLElement
-    {
-        $orders_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-        foreach ($orders as $order) {
-            if ($this->shouldInclude($order)) {
-                $this->order($orders_xml, $order);
-            }
-        }
-
-        return $xml;
-    }
-
-    /**
-     * Build an XML document given a Order instance
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param Order $order
-     * @param String $name the name of the child node, default 'Order'
-     * @return SimpleXMLElement
-     */
-    public function order(\SimpleXMLElement $xml, Order $order, $name='Order'): \SimpleXMLElement
-    {
-        $order_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-
-        $order_mapping = [
-            'OrderID' => [
-                'callback' => function ($order) {
-                    $settings =  Plugin::getInstance()->settings;
-                    $prefix = $settings->orderIdPrefix;
-                    return $prefix . $order->id;
-                },
-                'cdata' => false,
-            ],
-            'OrderNumber' => [
-                'callback' => function ($order) {
-                    $orderFieldEvent = new OrderFieldEvent([
-                        'field' => OrderFieldEvent::FIELD_ORDER_NUMBER,
-                        'order' => $order,
-                        'value' => $order->reference,
-                    ]);
-
-                    Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
-                    return $orderFieldEvent->value;
-                },
-                'cdata' => false,
-            ],
-            'OrderStatus' => [
-                'callback' => function ($order) {
-                    return $order->getOrderStatus()->handle;
-                },
-                'cdata' => false,
-            ],
-            'OrderTotal' => [
-                'callback' => function ($order) {
-                    return round($order->totalPrice, 2);
-                },
-                'cdata' => false,
-            ],
-            'TaxAmount' => [
-                'callback' => function ($order) {
-                    return $order->getTotalTax();
-                },
-                'cdata' => false,
-            ],
-            'ShippingAmount' => [
-                'callback' => function ($order) {
-                    return $order->getTotalShippingCost();
-                },
-                'cdata' => false,
-            ]
-        ];
-        $this->mapCraftModel($order_xml, $order_mapping, $order);
-
-        $order_xml->addChild('OrderDate', date_format($order->dateOrdered ?: $order->dateCreated, 'n/j/Y H:m'));
-
-        $order_xml->addChild('LastModified', date_format($order->dateUpdated ?: $order->dateCreated, 'n/j/Y H:m'));
-
-        $this->shippingMethod($order_xml, $order);
-
-        $paymentSource = $order->getPaymentSource();
-        if ($paymentSource) {
-            $this->addChildWithCDATA($order_xml, 'PaymentMethod', $paymentSource->description);
-        }
-
-        $items_xml = $this->items($order_xml, $order->getLineItems());
-        $this->discount($items_xml, $order);
-
-        $customer = $order->getCustomer();
-        $customer_xml = $this->customer($order_xml, $customer);
-
-        $billTo_xml = $this->billTo($customer_xml, $order, $customer);
-
-        $shipTo_xml = $this->shipTo($customer_xml, $order, $customer);
-
-        $this->customOrderFields($order_xml, $order);
-
-        return $order_xml;
-    }
-
-    /**
-     * Add a child with the shipping method to the order_xml, allowing plugins to override as needed
-     *
-     * @param SimpleXMLElement $order_xml the order xml to add a child to
-     * @param [Order] $order
-     * @return null
-     */
-    public function shippingMethod(\SimpleXMLElement $order_xml, $order): void
-    {
-        $orderFieldEvent = new OrderFieldEvent([
-            'field' => OrderFieldEvent::FIELD_SHIPPING_METHOD,
-            'order' => $order,
-        ]);
-        Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
-
-        if (!$orderFieldEvent->value) {
-            $orderFieldEvent->value = $order->shippingMethodHandle;
-        }
-
-        $this->addChildWithCDATA($order_xml, 'ShippingMethod', $orderFieldEvent->value);
-    }
-
-    /**
-     * Build an XML document given an array of items
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param [LineItem] $items
-     * @param String $name the name of the child node, default 'Items'
-     * @return SimpleXMLElement
-     */
-    public function items(\SimpleXMLElement $xml, $items, $name='Items'): \SimpleXMLElement
-    {
-        $items_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-        foreach ($items as $item) {
-            $this->item($items_xml, $item);
-        }
-
-        return $items_xml;
-    }
-
-    /**
-     * Build an XML document given a LineItem instance
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param LineItem $item
-     * @param String $name the name of the child node, default 'Item'
-     * @return SimpleXMLElement
-     */
-    public function item(\SimpleXMLElement $xml, LineItem $item, $name='Item'): \SimpleXMLElement
-    {
-        $item_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-
-        $item_mapping = [
-            'SKU' => [
-                'callback' => function ($item) {
-                    return $item->snapshot['sku'];
-                },
-            ],
-            'Name' => [
-                'callback' => function ($item) {
-                    return substr($item->description, 0, 200);
-                },
-            ],
-            'Weight' => [
-                'callback' => function ($item) {
-                    $weight_units = CommercePlugin::getInstance()->settings->weightUnits;
-
-                    if ($weight_units == 'kg') {
-                        // kilograms need to be converted to grams for ShipStation
-                        return round($item->weight * 1000, 2);
-                    }
-
-                    return round($item->weight, 2);
-                },
-                'cdata' => false,
-            ],
-            'Quantity' => [
-                'field' => 'qty',
-                'cdata' => false,
-            ],
-            'UnitPrice' => [
-                'callback' => function ($item) {
-                    return round($item->salePrice, 2);
-                },
-                'cdata' => false,
-            ],
-            'ImageUrl' => [
-                'callback' => function ($item) {
-                    $productImagesHandle = Plugin::getInstance()->getSettings()->productImagesHandle;
-                    $purchasable = $item->getPurchasable();
-                    if ($productImagesHandle !== null && $purchasable !== null) {
-                        $assetQuery = $purchasable->{$productImagesHandle};
-                        if ($assetQuery === null) {
-                            // Fallback to the product if the variant does not have an asset
-                            $assetQuery = $purchasable->product->{$productImagesHandle};
-                        }
-                        if ($assetQuery !== null) {
-                            $asset = $assetQuery->one();
-                            if ($asset !== null) {
-                                return UrlHelper::siteUrl($asset->getUrl());
-                            }
-                        }
-                    }
-
-                    return null;
-                },
-                'cdata' => false,
-            ]
-        ];
-        $this->mapCraftModel($item_xml, $item_mapping, $item);
-
-        switch (CommercePlugin::getInstance()->settings->weightUnits) {
-            case 'lb':
-                $ss_weight_units = 'Pounds';
-                break;
-            case 'kg':
-            case 'g':
-            default:
-                $ss_weight_units = 'Grams';
-        }
-
-        $item_xml->addChild('WeightUnits', $ss_weight_units);
-
-        if (isset($item->options)) {
-            $option_xml = $this->options($item_xml, $item->options);
-        }
-
-        return $item_xml;
-    }
-
-    /**
-     * Discounts (a.k.a. coupons) are added as items
-     * @param  SimpleXMLElement      $xml  [description]
-     * @param  Order $order [description]
-     * @param  string                 $name [description]
-     * @return [type]                       [description]
-     */
-    public function discount(\SimpleXMLElement $xml, Order $order, $name='Item'): null|\SimpleXMLElement
-    {
-        // If no discount was applied, skip this
-        if ($order->getTotalDiscount() >= 0) {
-            return null;
-        }
-
-        $discount_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-
-        $discount_mapping = [
-            'SKU' => [
-                'callback' => function ($order) {
-                    return '';
-                },
-                'cdata' => false
-            ],
-            'Name' => 'couponCode',
-            'Quantity' => [
-                'callback' => function ($order) {
-                    return 1;
-                },
-                'cdata' => false
-            ],
-            'UnitPrice'  => [
-                'callback' => function ($order) {
-                    return round($order->getTotalDiscount(), 2);
-                },
-                'cdata' => false,
-            ],
-            'Adjustment' => [
-                'callback' => function ($order) {
-                    return 'true';
-                },
-                'cdata' => false,
-            ],
-        ];
-        $this->mapCraftModel($discount_xml, $discount_mapping, $order);
-
-        return $discount_xml;
-    }
-
-    /**
-     * Build an XML document given a hash of options
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param array $options
-     * @param String $name the name of the child node, default 'Options'
-     * @return SimpleXMLElement
-     */
-    public function options(\SimpleXMLElement $xml, $options, $name='Options'): \SimpleXMLElement
-    {
-        $options_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-
-
-        $index = 0;
-        foreach ($options as $key => $value) {
-            $option_xml = $options_xml->addChild('Option');
-            $option_xml->addChild('Name', $key);
-
-            if (is_array($value) || !is_object($value)) {
-                $value = json_encode($value);
-            }
-
-            $this->addChildWithCDATA($option_xml, 'Value', substr(htmlspecialchars($value), 0, 100));
-
-            // ShipStation limits the number of options on any line item
-            $index++;
-            if ($index === self::LINEITEM_OPTION_LIMIT) {
-                break;
-            }
-        }
-
-        return $xml;
-    }
-
-    /**
-     * Build an XML document given a Customer instance
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param Customer $customer
-     * @param String $name the name of the child node, default 'Customer'
-     * @return SimpleXMLElement
-     */
-    public function customer(\SimpleXMLElement $xml, User $customer, $name='Customer'): \SimpleXMLElement
-    {
-        $customer_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-
-        $customer_mapping = ['CustomerCode' => 'id'];
-        $this->mapCraftModel($customer_xml, $customer_mapping, $customer);
-
-        return $customer_xml;
-    }
-
-    private function generateName($firstName, $lastName): ?string
-    {
-        if (!$firstName && !$lastName) {
-            return false;
-        }
-
-        $names = [$firstName, $lastName];
-        $names = array_filter(
-            $names,
-            function($name) {
-                return $name !== null && $name !== '';
-            }
-        );
-
-        return implode(' ', $names);
-    }
-
-    /**
-     * Add a BillTo address XML Child
-     *
-     * @param SimpleXMLElement $customer_xml the xml to add a child to or modify
-     * @param Order $order
-     * @param Customer $customer
-     * @return SimpleXMLElement, or null if no address exists
-     */
-    public function billTo(\SimpleXMLElement $customer_xml, Order $order, User $customer): ?\SimpleXMLElement
-    {
-        $billingAddress = $order->getBillingAddress();
-        if (!$billingAddress) {
-            $settings = Plugin::getInstance()->settings;
-            $billingSameAsShipping = $settings->billingSameAsShipping;
-            if ($billingSameAsShipping) {
-                $billingAddress = $order->getShippingAddress();
-            }
-        }
-
-        if ($billingAddress) {
-            $billTo_xml = $this->address($customer_xml, $billingAddress, 'BillTo');
-            if (!$name = $this->generateName($billingAddress->firstName, $billingAddress->lastName)) {
-                //$user = $customer->getUser();
-                $user = $customer;
-                if ($user) {
-                    $name = $this->generateName($user->firstName, $user->lastName) ?: 'Unknown';
-                } else {
-                    $name = 'Unknown';
-                }
-            }
-            $this->addChildWithCDATA($billTo_xml, 'Name', $name);
-            $billTo_xml->addChild('Email', $order->email);
-
-            return $billTo_xml;
-        }
-        return null;
-    }
-
-    /**
-     * Add a ShipTo address XML Child
-     *
-     * @param SimpleXMLElement $customer_xml the xml to add a child to or modify
-     * @param Order $order
-     * @param Customer $customer
-     * @return SimpleXMLElement, or null if no address exists
-     */
-    public function shipTo(\SimpleXMLElement $customer_xml, Order $order, User $customer): ?\SimpleXMLElement
-    {
-        $shippingAddress = $order->getShippingAddress();
-        $shipTo_xml = $this->address($customer_xml, $shippingAddress, 'ShipTo');
-        if (!$name = $this->generateName($shippingAddress->firstName, $shippingAddress->lastName)) {
-            //$user = $customer->getUser();
-            $user = $customer;
-            if ($user) {
-                $name = $this->generateName($user->firstName, $user->lastName) ?: 'Unknown';
-            } else {
-                $name = 'Unknown';
-            }
-        }
-        $this->addChildWithCDATA($shipTo_xml, 'Name', $name);
-
-        return $shipTo_xml;
-    }
-
-    /**
-     * Build an XML document given a Address instance
-     *
-     * @param SimpleXMLElement $xml the xml to add a child to or modify
-     * @param Address $address
-     * @param String $name the name of the child node, default 'Address'
-     * @return SimpleXMLElement
-     */
-    public function address(\SimpleXMLElement $xml, Address $address=null, $name='Address')
-    {
-        $address_xml = $xml->getName() == $name ? $xml : $xml->addChild($name);
-        $settings =  Plugin::getInstance()->settings;
-        if (!is_null($address)) {
-            $address_mapping = [
-                'Company' => 'organization',
-                'Address1' => 'addressLine1',
-                'Address2' => 'addressLine2',
-                'City' => 'locality',
-                'State' => 'administrativeArea',
-                'PostalCode' => 'postalCode',
-                /*'Country' =>  [
-                    'callback' => function ($address) {
-                        return $address->countryId ? $address->getCountry()->iso : null;
-                    },
-                    'cdata' => false,
-                ]
-                */
-                'Country' => 'countryCode',
-            ];
-
-            if(!empty($settings->phoneNumberFieldHandle)){
-                $address_mapping['Phone'] = $settings->phoneNumberFieldHandle;
-            }
-
-            $this->mapCraftModel($address_xml, $address_mapping, $address);
-        }
-
-        return $address_xml;
-    }
-
-    /**
-     * Allow plugins to add custom fields to the order
-     *
-     * @param SimpleXMLElement $xml the order xml to add a child
-     * @param Order $order
-     * @return SimpleXMLElement
-     */
-    public function customOrderFields(\SimpleXMLElement $order_xml, Order $order)
-    {
-        $customFields = [
-            [OrderFieldEvent::FIELD_CUSTOM_FIELD_1, 100],
-            [OrderFieldEvent::FIELD_CUSTOM_FIELD_2, 100],
-            [OrderFieldEvent::FIELD_CUSTOM_FIELD_3, 100],
-            [OrderFieldEvent::FIELD_INTERNAL_NOTES, 1000],
-            [OrderFieldEvent::FIELD_CUSTOMER_NOTES, 1000],
-            [OrderFieldEvent::FIELD_GIFT, 100],
-            [OrderFieldEvent::FIELD_GIFT_MESSAGE, 1000],
-        ];
-
-        foreach ($customFields as [$fieldName, $charLimit]) {
-            $orderFieldEvent = new OrderFieldEvent([
-                'field' => $fieldName,
-                'order' => $order,
-            ]);
-
-            Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
-            $data = $orderFieldEvent->value ?: '';
-
-            // Gift field requires a boolean value
-            if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
-                $data = $data ? 'true' : 'false';
-                $order_xml->addChild($fieldName, $data);
-            } else {
-                if ($orderFieldEvent->cdata) {
-                    $this->addChildWithCDATA($order_xml, $fieldName, substr(htmlspecialchars($data), 0, $charLimit));
-                } else {
-                    $order_xml->addChild($fieldName, substr(htmlspecialchars($data), 0, $charLimit));
-                }
-            }
-        }
-
-        return $order_xml;
-    }
-
-    /***************************** helpers *******************************/
-
-    protected function mapCraftModel($xml, $mapping, $model)
-    {
-        foreach ($mapping as $name => $attr) {
-            $value = $this->valueFromMappingAndModel($attr, $model);
-
-            //wrap in cdata unless explicitly set not to
-            if (!is_array($attr) || !array_key_exists('cdata', $attr) || $attr['cdata']) {
-                $this->addChildWithCDATA($xml, $name, $value);
-            } else {
-                $xml->addChild($name, $value);
-            }
-        }
-        return $xml;
-    }
-
-    /**
-     * Retrieve data from a Craft model by field name or method name.
-     *
-     * Example usage:
-     *   by field:
-     *   $value = $this->valueFromMappingAndModel('id', $order);
-     *   echo $value; // order id, wrapped in CDATA tag
-     *
-     *   by field with custom options
-     *   $options = ['field' => 'totalAmount', 'cdata' => false];
-     *   $value = $this->valueFromMappingAndModel($options, $value);
-     *   echo $value; // the order's totalAmount, NOT wrapped in cdata
-     *
-     *   by annonymous function (closure):
-     *   $value = $this->valueFromMappingAndModel(function($order) {
-     *      return is_null($order->name) ? 'N/A' : $order->name;
-     *   }, $order);
-     *   echo $value; // the order's name if it is set, or 'N/A' otherwise
-     *
-     *   @param mixed $options, a string field name or
-     *                          a callback accepting the model instance as its only parameter or
-     *                          a hash containing options with a 'field' or 'callback' key
-     *   @param BaseModel $model, an instance of a craft model
-     *   @return string
-     */
-    protected function valueFromMappingAndModel($options, $model)
-    {
-        $value = null;
-
-        //if field name exists in the options array
-        if (is_array($options) && array_key_exists('field', $options)) {
-            $field = $options['field'];
-            $value = $model->{$field};
-        }
-        //if value is coming from a callback in the options array
-        elseif (is_array($options) && array_key_exists('callback', $options)) {
-            $callback = $options['callback'];
-            $value = $callback($model);
-        }
-        //if value is a callback
-        elseif (is_object($options) && is_callable($options)) {
-            $value = $options($model);
-        }
-        //if value is an attribute on the model, passed as a string field name
-        elseif (is_string($options)) {
-            $value = $model->{$options};
-        }
-        // if null, leave blank
-        elseif (is_null($options)) {
-            $value = '';
-        }
-
-        if ($value === true || $value === false) {
-            $value = $value ? "true" : "false";
-        }
-        return $value;
-    }
-
-    /**
-     * Add a child with <!CDATA[...]]>
-     *
-     * We cannot simply do this by manipulating the string, because SimpleXMLElement and/or Craft will encode it
-     *
-     * @param $xml SimpleXMLElement the parent to which we're adding a child
-     * @param $name String the xml node name
-     * @param $value Mixed the value of the new child node, which will be wrapped in CDATA
-     * @return SimpleXMLElement, the new child
-     */
-    protected function addChildWithCDATA(&$xml, $name, $value)
-    {
-        $new_child = $xml->addChild($name);
-        if ($new_child !== null) {
-            $node = dom_import_simplexml($new_child);
-            $node->appendChild($node->ownerDocument->createCDATASection($value));
-        }
-        return $new_child;
-    }
+	public const LINEITEM_OPTION_LIMIT = 10;
+
+	public const ORDER_FIELD_EVENT = 'orderFieldEvent';
+
+	/**
+	 * @throws InvalidConfigException
+	 */
+	public function shouldInclude(Order $order): bool
+	{
+		$billingSameAsShipping = Plugin::getInstance()?->settings->billingSameAsShipping ?? false;
+		return $order->getShippingAddress()
+			&& $order->getOrderStatus()
+			&& ($billingSameAsShipping || $order->getBillingAddress())
+			&& $order->getCustomer();
+	}
+
+	/**
+	 * Build an XML document given an array of orders
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param Order[] $orders
+	 * @param string $name the name of the child node, default 'Orders'
+	 * @throws InvalidConfigException
+	 */
+	public function orders(SimpleXMLElement $xml, array $orders, string $name = 'Orders'): SimpleXMLElement
+	{
+		$ordersXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($ordersXml === null) {
+			throw new \RuntimeException("Unable to create child {$name}");
+		}
+
+		foreach ($orders as $order) {
+			if ($this->shouldInclude($order)) {
+				$this->order($ordersXml, $order);
+			}
+		}
+
+		return $xml;
+	}
+
+	/**
+	 * Build an XML document given a Order instance
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param string $name the name of the child node, default 'Order'
+	 * @throws InvalidConfigException
+	 */
+	public function order(SimpleXMLElement $xml, Order $order, string $name = 'Order'): SimpleXMLElement
+	{
+		$orderXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($orderXml === null) {
+			throw new \RuntimeException("Unable to create child {$name}");
+		}
+
+		$order_mapping = [
+			'OrderID' => [
+				'callback' => function ($order) {
+					$prefix = Plugin::getInstance()?->settings->orderIdPrefix ?? '';
+					return $prefix . $order->id;
+				},
+				'cdata' => false,
+			],
+			'OrderNumber' => [
+				'callback' => function ($order) {
+					$orderFieldEvent = new OrderFieldEvent([
+						'field' => OrderFieldEvent::FIELD_ORDER_NUMBER,
+						'order' => $order,
+						'value' => $order->reference,
+					]);
+
+					Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
+					return $orderFieldEvent->value;
+				},
+				'cdata' => false,
+			],
+			'OrderStatus' => [
+				'callback' => function ($order) {
+					return $order->getOrderStatus()->handle;
+				},
+				'cdata' => false,
+			],
+			'OrderTotal' => [
+				'callback' => function ($order) {
+					return round($order->totalPrice, 2);
+				},
+				'cdata' => false,
+			],
+			'TaxAmount' => [
+				'callback' => function ($order) {
+					return $order->getTotalTax();
+				},
+				'cdata' => false,
+			],
+			'ShippingAmount' => [
+				'callback' => function ($order) {
+					return $order->getTotalShippingCost();
+				},
+				'cdata' => false,
+			],
+		];
+		$this->mapCraftModel($orderXml, $order_mapping, $order);
+
+		/** @var \DateTime $orderDate */
+		$orderDate = $order->dateOrdered ?? $order->dateCreated;
+		$orderXml->addChild('OrderDate', date_format($orderDate, 'n/j/Y H:m'));
+
+		/** @var \DateTime $lastModifiedDate */
+		$lastModifiedDate = $order->dateUpdated ?? $order->dateCreated;
+		$orderXml->addChild('LastModified', date_format($lastModifiedDate, 'n/j/Y H:m'));
+
+		$this->shippingMethod($orderXml, $order);
+
+		$paymentSource = $order->getPaymentSource();
+		if ($paymentSource) {
+			$this->addChildWithCDATA($orderXml, 'PaymentMethod', $paymentSource->description);
+		}
+
+		$items_xml = $this->items($orderXml, $order->getLineItems());
+		$this->discount($items_xml, $order);
+
+		$customer = $order->getCustomer();
+
+		if ($customer !== null) {
+			$customerXml = $this->customer($orderXml, $customer);
+			$this->billTo($customerXml, $order, $customer);
+			$this->shipTo($customerXml, $order, $customer);
+		}
+
+		$this->customOrderFields($orderXml, $order);
+
+		return $orderXml;
+	}
+
+	/**
+	 * Add a child with the shipping method to the order_xml, allowing plugins to override as needed
+	 *
+	 * @param SimpleXMLElement $orderXml the order xml to add a child to
+	 */
+	public function shippingMethod(SimpleXMLElement $orderXml, Order $order): void
+	{
+		$orderFieldEvent = new OrderFieldEvent([
+			'field' => OrderFieldEvent::FIELD_SHIPPING_METHOD,
+			'order' => $order,
+		]);
+		Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
+
+		if (! $orderFieldEvent->value) {
+			$orderFieldEvent->value = $order->shippingMethodHandle;
+		}
+
+		$this->addChildWithCDATA($orderXml, 'ShippingMethod', $this->asString($orderFieldEvent->value));
+	}
+
+	/**
+	 * Build an XML document given an array of items
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param LineItem[] $items
+	 * @param string $name the name of the child node, default 'Items'
+	 */
+	public function items(SimpleXMLElement $xml, array $items, string $name = 'Items'): SimpleXMLElement
+	{
+		$itemsXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($itemsXml === null) {
+			throw new \RuntimeException("Unable to create child {$name}");
+		}
+
+		foreach ($items as $item) {
+			$this->item($itemsXml, $item);
+		}
+
+		return $itemsXml;
+	}
+
+	/**
+	 * Build an XML document given a LineItem instance
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param string $name the name of the child node, default 'Item'
+	 */
+	public function item(SimpleXMLElement $xml, LineItem $item, string $name = 'Item'): SimpleXMLElement
+	{
+		$itemXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($itemXml === null) {
+			throw new \RuntimeException("Unable to create child {$name}");
+		}
+
+		$item_mapping = [
+			'SKU' => [
+				'callback' => function ($item) {
+					return $item->snapshot['sku'];
+				},
+			],
+			'Name' => [
+				'callback' => function ($item) {
+					return substr($item->description, 0, 200);
+				},
+			],
+			'Weight' => [
+				'callback' => function ($item) {
+					$weight_units = CommercePlugin::getInstance()?->settings->weightUnits;
+
+					if ($weight_units === 'kg') {
+						// kilograms need to be converted to grams for ShipStation
+						return round($item->weight * 1000, 2);
+					}
+
+					return round($item->weight, 2);
+				},
+				'cdata' => false,
+			],
+			'Quantity' => [
+				'field' => 'qty',
+				'cdata' => false,
+			],
+			'UnitPrice' => [
+				'callback' => function ($item) {
+					return round($item->salePrice, 2);
+				},
+				'cdata' => false,
+			],
+			'ImageUrl' => [
+				'callback' => function ($item) {
+					$productImagesHandle = Plugin::getInstance()?->settings->productImagesHandle;
+					$purchasable = $item->getPurchasable();
+					if ($productImagesHandle !== null && $purchasable !== null) {
+						$assetQuery = $purchasable->{$productImagesHandle};
+						if ($assetQuery === null) {
+							// Fallback to the product if the variant does not have an asset
+							$assetQuery = $purchasable->product->{$productImagesHandle};
+						}
+						if ($assetQuery !== null) {
+							$asset = $assetQuery->one();
+							if ($asset !== null) {
+								return UrlHelper::siteUrl($asset->getUrl());
+							}
+						}
+					}
+
+					return null;
+				},
+				'cdata' => false,
+			],
+		];
+		$this->mapCraftModel($itemXml, $item_mapping, $item);
+
+		$weightUnits = match (CommercePlugin::getInstance()?->settings->weightUnits) {
+			'lb' => 'Pounds',
+			default => 'Grams',
+		};
+
+		$itemXml->addChild('WeightUnits', $weightUnits);
+
+		if (isset($item->options)) {
+			$this->options($itemXml, $item->options);
+		}
+
+		return $itemXml;
+	}
+
+	/**
+	 * Discounts (a.k.a. coupons) are added as items
+	 */
+	public function discount(SimpleXMLElement $xml, Order $order, string $name = 'Item'): null|SimpleXMLElement
+	{
+		// If no discount was applied, skip this
+		if ($order->getTotalDiscount() >= 0) {
+			return null;
+		}
+
+		$discountXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($discountXml === null) {
+			throw new \RuntimeException("Unable to create child {$name}");
+		}
+
+		$discount_mapping = [
+			'SKU' => [
+				'callback' => function ($order) {
+					return '';
+				},
+				'cdata' => false,
+			],
+			'Name' => 'couponCode',
+			'Quantity' => [
+				'callback' => function ($order) {
+					return 1;
+				},
+				'cdata' => false,
+			],
+			'UnitPrice' => [
+				'callback' => function ($order) {
+					return round($order->getTotalDiscount(), 2);
+				},
+				'cdata' => false,
+			],
+			'Adjustment' => [
+				'callback' => function ($order) {
+					return 'true';
+				},
+				'cdata' => false,
+			],
+		];
+
+		$this->mapCraftModel($discountXml, $discount_mapping, $order);
+
+		return $discountXml;
+	}
+
+	/**
+	 * Build an XML document given a hash of options
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param array<string, mixed> $options
+	 * @param string $name the name of the child node, default 'Options'
+	 * @throws \JsonException
+	 */
+	public function options(SimpleXMLElement $xml, array $options, string $name = 'Options'): SimpleXMLElement
+	{
+		$optionsXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($optionsXml === null) {
+			throw new \RuntimeException("Unable to create child {$name}");
+		}
+
+		$index = 0;
+		foreach ($options as $key => $value) {
+			$optionXml = $optionsXml->addChild('Option');
+
+			if ($optionXml === null) {
+				throw new \RuntimeException("Unable to create option child {$name}");
+			}
+
+			$optionXml->addChild('Name', $key);
+
+			$this->addChildWithCDATA($optionXml, 'Value', substr(htmlspecialchars($this->asString($value)), 0, 100));
+
+			// ShipStation limits the number of options on any line item
+			$index++;
+			if ($index === self::LINEITEM_OPTION_LIMIT) {
+				break;
+			}
+		}
+
+		return $xml;
+	}
+
+	/**
+	 * Build an XML document given a Customer instance
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param string $name the name of the child node, default 'Customer'
+	 */
+	public function customer(SimpleXMLElement $xml, User $customer, string $name = 'Customer'): SimpleXMLElement
+	{
+		$customerXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($customerXml === null) {
+			throw new \RuntimeException("Unable to create customer child {$name}");
+		}
+
+		$customerMapping = [
+			'CustomerCode' => 'id',
+		];
+		$this->mapCraftModel($customerXml, $customerMapping, $customer);
+
+		return $customerXml;
+	}
+
+	/**
+	 * Add a BillTo address XML Child
+	 *
+	 * @param SimpleXMLElement $customerXml the xml to add a child to or modify
+	 */
+	public function billTo(SimpleXMLElement $customerXml, Order $order, User $customer): void
+	{
+		$billingAddress = $order->getBillingAddress();
+		if (! $billingAddress) {
+			$billingSameAsShipping = Plugin::getInstance()->settings->billingSameAsShipping ?? false;
+			if ($billingSameAsShipping) {
+				$billingAddress = $order->getShippingAddress();
+			}
+		}
+
+		if ($billingAddress) {
+			$billToXml = $this->address($customerXml, $billingAddress, 'BillTo');
+			$name = $this->generateName($billingAddress->firstName, $billingAddress->lastName);
+
+			if ($name === null) {
+				$name = $this->generateName($customer->firstName, $customer->lastName) ?: 'Unknown';
+			}
+			$this->addChildWithCDATA($billToXml, 'Name', $name);
+			$billToXml->addChild('Email', $order->email);
+		}
+	}
+
+	/**
+	 * Add a ShipTo address XML Child
+	 *
+	 * @param SimpleXMLElement $customer_xml the xml to add a child to or modify
+	 * @throws \JsonException
+	 */
+	public function shipTo(SimpleXMLElement $customer_xml, Order $order, User $customer): void
+	{
+		$shippingAddress = $order->getShippingAddress();
+		if ($shippingAddress === null) {
+			return;
+		}
+
+		$shipToXml = $this->address($customer_xml, $shippingAddress, 'ShipTo');
+		$name = $this->generateName($shippingAddress->firstName, $shippingAddress->lastName);
+
+		if ($name !== null) {
+			$name = $this->generateName($customer->firstName, $customer->lastName) ?: 'Unknown';
+		}
+		$this->addChildWithCDATA($shipToXml, 'Name', $this->asString($name));
+	}
+
+	/**
+	 * Build an XML document given a Address instance
+	 *
+	 * @param SimpleXMLElement $xml the xml to add a child to or modify
+	 * @param string $name the name of the child node, default 'Address'
+	 */
+	public function address(SimpleXMLElement $xml, ?Address $address = null, string $name = 'Address'): SimpleXMLElement
+	{
+		$addressXml = $xml->getName() === $name ? $xml : $xml->addChild($name);
+
+		if ($addressXml === null) {
+			throw new \RuntimeException("Unable to create address child {$name}");
+		}
+
+		$phoneNumberFieldHandle = Plugin::getInstance()?->settings->phoneNumberFieldHandle ?? '';
+		if ($address !== null) {
+			$address_mapping = [
+				'Company' => 'organization',
+				'Address1' => 'addressLine1',
+				'Address2' => 'addressLine2',
+				'City' => 'locality',
+				'State' => 'administrativeArea',
+				'PostalCode' => 'postalCode',
+				/*'Country' =>  [
+					'callback' => function ($address) {
+						return $address->countryId ? $address->getCountry()->iso : null;
+					},
+					'cdata' => false,
+				]
+				*/
+				'Country' => 'countryCode',
+			];
+
+			if ($phoneNumberFieldHandle !== '') {
+				$address_mapping['Phone'] = $phoneNumberFieldHandle;
+			}
+
+			$this->mapCraftModel($addressXml, $address_mapping, $address);
+		}
+
+		return $addressXml;
+	}
+
+	/**
+	 * Allow plugins to add custom fields to the order
+	 *
+	 * @param SimpleXMLElement $orderXml the order xml to add a child
+	 * @throws \JsonException
+	 */
+	public function customOrderFields(SimpleXMLElement $orderXml, Order $order): SimpleXMLElement
+	{
+		$customFields = [
+			[OrderFieldEvent::FIELD_CUSTOM_FIELD_1, 100],
+			[OrderFieldEvent::FIELD_CUSTOM_FIELD_2, 100],
+			[OrderFieldEvent::FIELD_CUSTOM_FIELD_3, 100],
+			[OrderFieldEvent::FIELD_INTERNAL_NOTES, 1000],
+			[OrderFieldEvent::FIELD_CUSTOMER_NOTES, 1000],
+			[OrderFieldEvent::FIELD_GIFT, 100],
+			[OrderFieldEvent::FIELD_GIFT_MESSAGE, 1000],
+		];
+
+		foreach ($customFields as [$fieldName, $charLimit]) {
+			$orderFieldEvent = new OrderFieldEvent([
+				'field' => $fieldName,
+				'order' => $order,
+			]);
+
+			Event::trigger(static::class, self::ORDER_FIELD_EVENT, $orderFieldEvent);
+			$data = $orderFieldEvent->value ?: '';
+
+			// Gift field requires a boolean value
+			if ($fieldName === OrderFieldEvent::FIELD_GIFT) {
+				$data = $data ? 'true' : 'false';
+				$orderXml->addChild($fieldName, $data);
+			} else {
+				if ($orderFieldEvent->cdata) {
+					$this->addChildWithCDATA($orderXml, $fieldName, substr(htmlspecialchars($this->asString($data)), 0, $charLimit));
+				} else {
+					$orderXml->addChild($fieldName, substr(htmlspecialchars($this->asString($data)), 0, $charLimit));
+				}
+			}
+		}
+
+		return $orderXml;
+	}
+
+	/**
+	 * @param array<string, mixed> $mapping
+	 */
+	protected function mapCraftModel(SimpleXMLElement $xml, array $mapping, BaseModel $model): SimpleXMLElement
+	{
+		foreach ($mapping as $name => $attr) {
+			$value = $this->valueFromMappingAndModel($attr, $model);
+
+			//wrap in cdata unless explicitly set not to
+			if (! is_array($attr) || ! array_key_exists('cdata', $attr) || $attr['cdata']) {
+				$this->addChildWithCDATA($xml, $name, $this->asString($value));
+			} else {
+				$xml->addChild($name, $value);
+			}
+		}
+		return $xml;
+	}
+
+	/**
+	 * Retrieve data from a Craft model by field name or method name.
+	 *
+	 * Example usage:
+	 *   by field:
+	 *   $value = $this->valueFromMappingAndModel('id', $order);
+	 *   echo $value; // order id, wrapped in CDATA tag
+	 *
+	 *   by field with custom options
+	 *   $options = ['field' => 'totalAmount', 'cdata' => false];
+	 *   $value = $this->valueFromMappingAndModel($options, $value);
+	 *   echo $value; // the order's totalAmount, NOT wrapped in cdata
+	 *
+	 *   by annonymous function (closure):
+	 *   $value = $this->valueFromMappingAndModel(function($order) {
+	 *      return is_null($order->name) ? 'N/A' : $order->name;
+	 *   }, $order);
+	 *   echo $value; // the order's name if it is set, or 'N/A' otherwise
+	 *
+	 *   @param mixed $options, a string field name or
+	 *                          a callback accepting the model instance as its only parameter or
+	 *                          a hash containing options with a 'field' or 'callback' key
+	 *   @param BaseModel $model, an instance of a craft model
+	 */
+	protected function valueFromMappingAndModel(mixed $options, BaseModel $model): ?string
+	{
+		$value = null;
+
+		//if field name exists in the options array
+		if (is_array($options) && array_key_exists('field', $options)) {
+			$field = $options['field'];
+			$value = $model->{$field};
+		}
+		//if value is coming from a callback in the options array
+		elseif (is_array($options) && array_key_exists('callback', $options)) {
+			$callback = $options['callback'];
+			$value = $callback($model);
+		}
+		//if value is a callback
+		elseif (is_object($options) && is_callable($options)) {
+			$value = $options($model);
+		}
+		//if value is an attribute on the model, passed as a string field name
+		elseif (is_string($options)) {
+			$value = $model->{$options};
+		}
+		// if null, leave blank
+		elseif ($options === null) {
+			$value = '';
+		}
+
+		if ($value === true || $value === false) {
+			$value = $value ? 'true' : 'false';
+		}
+		return $value;
+	}
+
+	/**
+	 * Add a child with <!CDATA[...]]>
+	 *
+	 * We cannot simply do this by manipulating the string, because SimpleXMLElement and/or Craft will encode it
+	 *
+	 * @param SimpleXMLElement $xml the parent to which we're adding a child
+	 * @param string $name the xml node name
+	 * @param string $value the value of the new child node, which will be wrapped in CDATA
+	 * @return SimpleXMLElement, the new child
+	 */
+	protected function addChildWithCDATA(SimpleXMLElement $xml, string $name, string $value): SimpleXMLElement
+	{
+		$newChild = $xml->addChild($name);
+
+		if ($newChild === null) {
+			throw new \RuntimeException("Unable to create new child {$name}");
+		}
+
+		$node = dom_import_simplexml($newChild);
+		$section = $node->ownerDocument?->createCDATASection($value);
+		if ($section !== null) {
+			$node->appendChild($section);
+		}
+
+		return $newChild;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	private function asString(mixed $value): string
+	{
+		if ($value instanceof \Stringable) {
+			return (string) $value;
+		}
+
+		return json_encode($value, JSON_THROW_ON_ERROR);
+	}
+
+	private function generateName(?string $firstName, ?string $lastName): ?string
+	{
+		if ($firstName === null && $lastName === null) {
+			return null;
+		}
+
+		$names = [$firstName, $lastName];
+		$names = array_filter($names, static fn ($name) => $name !== null && $name !== '');
+
+		return implode(' ', $names);
+	}
 }
