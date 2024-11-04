@@ -218,7 +218,7 @@ class Order extends Base
 
 		// Include a discount as a line item if there is one.
 		$totalDiscount = $commerceOrder->getTotalDiscount();
-		if ($totalDiscount > 0) {
+		if ($totalDiscount !== 0.0) {
 			$items[] = Item::asAdjustment($totalDiscount);
 		}
 
