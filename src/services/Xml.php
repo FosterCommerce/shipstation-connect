@@ -51,10 +51,9 @@ class Xml extends Component
 				Event::trigger(static::class, self::ORDER_EVENT, $orderEvent);
 				return $orderEvent->transformedOrder;
 			})
-			->reduceSpread(static function (array $values, Order $order) {
+			->reduceSpread(static function (Collection $orders, Collection $failed, Order $order) {
 				/** @var Collection<int, Order> $orders */
 				/** @var Collection<int, Order> $failed */
-				[$orders, $failed] = $values;
 
 				if (! $order->validate()) {
 					$failed->add($order);
