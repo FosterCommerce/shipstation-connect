@@ -73,17 +73,8 @@ class OrdersController extends Controller
 				default:
 					throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
 			}
-		} catch (HttpException $httpException) {
-			$this->logException('Error processing action {action}', [
-				'action' => $action,
-			], $httpException);
-
-			throw $httpException;
 		} catch (\Throwable $throwable) {
-			$this->logException('Error processing action {action}', [
-				'action' => $action,
-			], $throwable);
-			throw $throwable;
+			throw new \RuntimeException("Error processing action {$action}", $throwable->getCode(), $throwable);
 		}
 	}
 
@@ -140,14 +131,15 @@ class OrdersController extends Controller
 
 		$query->orderBy('dateUpdated asc');
 
-		$num_pages = $this->paginateOrders($query);
+		$pageCount = $this->paginateOrders($query);
 
 		$parentXml = new \SimpleXMLElement('<Orders />');
-		$parentXml->addAttribute('pages', (string) $num_pages);
+		$parentXml->addAttribute('pages', (string) $pageCount);
 
-		Plugin::getInstance()?->xml->orders($parentXml, $query->all());
+		/** @var string $xmlString */
+		$xmlString = Plugin::getInstance()?->xml->generateXml($query->all(), $pageCount);
 
-		$this->returnXML($parentXml);
+		$this->returnXml($xmlString);
 	}
 
 	/**
@@ -350,13 +342,12 @@ class OrdersController extends Controller
 	 *
 	 * See craft/app/controllers/BaseController.php#returnJson() for comparisons
 	 */
-	protected function returnXML(\SimpleXMLElement $xml): void
+	protected function returnXml(string $xml): void
 	{
 		header('Content-type: text/xml');
 		// Output it into a buffer, in case TasksService wants to close the connection prematurely
 		ob_start();
-		echo $xml->asXML();
-
+		echo $xml;
 		exit(0);
 	}
 
@@ -365,21 +356,6 @@ class OrdersController extends Controller
 		/** @var Application $app */
 		$app = Craft::$app;
 		return $app;
-	}
-
-	/**
-	 * @param array<int|string, mixed> $params
-	 */
-	private function logException(string $msg, array $params = [], ?\Throwable $e = null): void
-	{
-		Craft::error(
-			Craft::t('shipstationconnect', $msg, $params),
-			__METHOD__
-		);
-
-		if ($e) {
-			Craft::$app->getErrorHandler()->logException($e);
-		}
 	}
 
 	private function getBlockTypeByHandle(int|string|null $fieldId, string $handle): ?MatrixBlockType
@@ -421,7 +397,7 @@ class OrdersController extends Controller
 	{
 		// Requires at least one value
 		foreach ($info as $key => $value) {
-			if ($value && ! empty(trim($value))) {
+			if ($value && trim($value) !== '') {
 				return true;
 			}
 		}

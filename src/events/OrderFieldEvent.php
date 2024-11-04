@@ -5,6 +5,9 @@ namespace fostercommerce\shipstationconnect\events;
 use craft\commerce\elements\Order;
 use yii\base\Event;
 
+/**
+ * @deprecated
+ */
 class OrderFieldEvent extends Event
 {
 	/**
