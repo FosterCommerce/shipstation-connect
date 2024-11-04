@@ -38,11 +38,8 @@ class Order extends Base
 	#[SerializedName('ShippingAmount')]
 	public float $shippingAmount;
 
-	#[SerializedName('OrderDate')]
-	public ?\DateTime $orderDate = null;
-
 	#[SerializedName('LastModified')]
-	public ?\DateTime $lastModifiedDate = null;
+	public ?string $lastModifiedDate = null;
 
 	#[SerializedName('PaymentMethod')]
 	public ?string $paymentMethod = null;
@@ -60,7 +57,7 @@ class Order extends Base
 	public ?Customer $customer;
 
 	#[SerializedName('InternalNotes')]
-	public string $internalNotes;
+	public string $internalNotes = '';
 
 	#[SerializedName('Gift')]
 	public bool $gift = false;
@@ -68,20 +65,51 @@ class Order extends Base
 	#[Ignore]
 	public CommerceOrder $parentOrder;
 
+	#[SerializedName('OrderDate')]
+	private ?string $orderDate = null;
+
 	#[SerializedName('CustomField1')]
-	private string $customField1;
+	private string $customField1 = '';
 
 	#[SerializedName('CustomField2')]
-	private string $customField2;
+	private string $customField2 = '';
 
 	#[SerializedName('CustomField3')]
-	private string $customField3;
+	private string $customField3 = '';
 
 	#[SerializedName('CustomerNotes')]
-	private string $customerNotes;
+	private string $customerNotes = '';
 
 	#[SerializedName('GiftMessage')]
-	private string $giftMessage;
+	private string $giftMessage = '';
+
+	public function getOrderDate(): ?string
+	{
+		return $this->orderDate;
+	}
+
+	public function setOrderDate(string|\DateTime $date): void
+	{
+		if (is_string($date)) {
+			$this->orderDate = $date;
+		} else {
+			$this->orderDate = self::formatDate($date);
+		}
+	}
+
+	public function getLastModifiedDate(): ?string
+	{
+		return $this->orderDate;
+	}
+
+	public function setLastModifiedDate(string|\DateTime $date): void
+	{
+		if (is_string($date)) {
+			$this->lastModifiedDate = $date;
+		} else {
+			$this->lastModifiedDate = self::formatDate($date);
+		}
+	}
 
 	public function setCustomField1(string $customField1): void
 	{
@@ -186,6 +214,7 @@ class Order extends Base
 			'orderDate' => self::formatDate($commerceOrder->dateOrdered ?? $commerceOrder->dateCreated),
 			'lastModifiedDate' => self::formatDate($commerceOrder->dateUpdated ?? $commerceOrder->dateCreated),
 			'paymentMethod' => $commerceOrder->getPaymentSource()?->description,
+			'shippingMethod' => $commerceOrder->shippingMethodHandle,
 			'items' => $items,
 			'customer' => Customer::fromCommerceOrder($commerceOrder),
 			'parentOrder' => $commerceOrder,

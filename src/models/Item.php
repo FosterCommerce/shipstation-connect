@@ -32,13 +32,13 @@ class Item extends Base
 	public float $unitPrice;
 
 	#[SerializedName('ImageUrl')]
-	public string $imageUrl;
+	public string $imageUrl = '';
 
 	#[SerializedName('WeightUnits')]
-	public string $weightUnit;
+	public string $weightUnits = '';
 
 	#[SerializedName('Adjustment')]
-	public string $adjustment;
+	public bool $adjustment = false;
 
 	/**
 	 * @var array<string, string>
@@ -53,7 +53,7 @@ class Item extends Base
 			'name' => 'couponCode',
 			'quantity' => 1,
 			'unitPrice' => round($totalDiscount, 2),
-			'adjustment' => 'true',
+			'adjustment' => true,
 		]);
 	}
 
