@@ -67,7 +67,7 @@ class Plugin extends \craft\base\Plugin
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_CP_URL_RULES,
-			function (RegisterUrlRulesEvent $event) {
+			function (RegisterUrlRulesEvent $event): void {
 				$event->rules['shipstationconnect/settings'] = 'shipstationconnect/settings/index';
 				$event->rules['shipstationconnect/settings/save'] = 'shipstationconnect/settings/save';
 			}
@@ -77,7 +77,7 @@ class Plugin extends \craft\base\Plugin
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-			function (RegisterUrlRulesEvent $event) {
+			function (RegisterUrlRulesEvent $event): void {
 				$event->rules['export'] = 'shipstationconnect/orders/export';
 			}
 		);
@@ -86,7 +86,7 @@ class Plugin extends \craft\base\Plugin
 		Event::on(
 			UserPermissions::class,
 			UserPermissions::EVENT_REGISTER_PERMISSIONS,
-			function (RegisterUserPermissionsEvent $event) {
+			function (RegisterUserPermissionsEvent $event): void {
 				$event->permissions[] = [
 					'heading' => 'ShipStation Connect',
 					'permissions' => [
@@ -120,25 +120,23 @@ class Plugin extends \craft\base\Plugin
 		return $item;
 	}
 
-	public function settingsHtml(): ?string
-	{
-		return Craft::$app->getView()->renderTemplate('shipstationconnect/settings', [
-			'settings' => $this->getSettings(),
-		]);
-	}
-
 	public function isAuthHandledByCraft(): bool
 	{
 		// RE https://github.com/craftcms/cms/issues/6421, if the site has the
 		// `enableBasicHttpAuth` setting set to true, we can assume that Craft
 		// will handle the authentication of requests.
-		if (version_compare(Craft::$app->getVersion(), '3.5.0') >= 0) {
-			if (Craft::$app->getConfig()->getGeneral()->enableBasicHttpAuth) {
-				return true;
-			}
+		if (version_compare(Craft::$app->getVersion(), '3.5.0') < 0) {
+			return false;
 		}
 
-		return false;
+		return (bool) Craft::$app->getConfig()->getGeneral()->enableBasicHttpAuth;
+	}
+
+	protected function settingsHtml(): ?string
+	{
+		return Craft::$app->getView()->renderTemplate('shipstationconnect/settings', [
+			'settings' => $this->getSettings(),
+		]);
 	}
 
 	protected function beforeInstall(): void

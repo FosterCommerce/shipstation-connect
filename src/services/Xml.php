@@ -8,13 +8,11 @@ use DOMDocument;
 use DOMElement;
 use fostercommerce\shipstationconnect\events\OrderEvent;
 use fostercommerce\shipstationconnect\models\Order;
+use fostercommerce\shipstationconnect\models\Orders;
+use fostercommerce\shipstationconnect\Plugin;
 use Illuminate\Support\Collection;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
-use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
-use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerBuilder;
 use yii\base\Event;
 
 class Xml extends Component
@@ -29,19 +27,7 @@ class Xml extends Component
 	 */
 	public function generateXml(array $commerceOrders, int $pageCount): string
 	{
-		$classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
-		$metadataAwareNameConverter = new MetadataAwareNameConverter($classMetadataFactory);
-		$serializer = new Serializer(
-			[new ObjectNormalizer($classMetadataFactory, $metadataAwareNameConverter)],
-			[
-				'xml' => new XmlEncoder(),
-			]
-		);
-
-		$context = [
-			'xml_root_node_name' => 'Orders',
-		];
-
+		/** @var Collection<int, Order> $failed */
 		[$orders, $failed] = collect($commerceOrders)
 			->map(Order::fromCommerceOrder(...))
 			->map(static function ($order): Order {
@@ -51,7 +37,7 @@ class Xml extends Component
 				Event::trigger(static::class, self::ORDER_EVENT, $orderEvent);
 				return $orderEvent->transformedOrder;
 			})
-			->reduceSpread(static function (Collection $orders, Collection $failed, Order $order) {
+			->reduceSpread(static function (Collection $orders, Collection $failed, Order $order): array {
 				/** @var Collection<int, Order> $orders */
 				/** @var Collection<int, Order> $failed */
 
@@ -60,12 +46,28 @@ class Xml extends Component
 				} else {
 					$orders->add($order);
 				}
+
 				return [$orders, $failed];
 			}, collect(), collect());
 
-		// TODO if $failed has items, do something.
+		$orders = Orders::fromCollection($orders, $pageCount);
 
-		$xmlString = $serializer->serialize($orders, 'xml', $context);
+		if ($failed->isNotEmpty() && (Plugin::getInstance()?->settings->failOnValidation ?? true)) {
+			// TODO store error logs somewhere
+
+			/** @var Order $firstFailedOrder */
+			$firstFailedOrder = $failed->first();
+			$firstErrrors = $firstFailedOrder->getFirstErrors();
+			$attribute = key($firstErrrors);
+			$value = reset($firstErrrors[$attribute]);
+
+			throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->orderId}: {$attribute} - {$value}");
+		}
+
+		$serializer = SerializerBuilder::create()->build();
+		$serializationContext = SerializationContext::create()->setGroups(['export']);
+
+		$xmlString = $serializer->serialize($orders, 'xml', $serializationContext);
 
 		// There doesn't seem to be a way to set an attribute on the root node
 		// This is a work-around.

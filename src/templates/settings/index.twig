@@ -131,6 +131,15 @@
       errors: settings.getErrors('orderIdPrefix'),
   }) }}
 
+	{{ forms.lightSwitchField({
+		label: "Fail export on validation failure"|t('shipstationconnect'),
+		instructions: "Fail the export when validation fails for any order in the current page of orders"|t('shipstationconnect'),
+		name: 'settings[failOnValidation]',
+		on: settings.failOnValidation,
+		checked: settings.failOnValidation,
+		errors: settings.getErrors('failOnValidation')
+	}) }}
+
   {% set statusHandles = craft.commerce.orderStatuses.getAllOrderStatuses %}
   {% set statusHandles = statusHandles|map(s => { label: s.name, value: s.handle }) %}
 

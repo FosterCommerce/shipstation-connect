@@ -59,22 +59,18 @@ class OrdersController extends Controller
 	 */
 	public function actionProcess(?string $store = null, ?string $action = null): YiiResponse
 	{
-		try {
-			if (! $this->authenticate()) {
-				throw new HttpException(401, 'Invalid ShipStation username or password.');
-			}
+		if (! $this->authenticate()) {
+			throw new HttpException(401, 'Invalid ShipStation username or password.');
+		}
 
-			switch ($action) {
-				case 'export':
-					$this->getOrders($store);
-					// no break
-				case 'shipnotify':
-					return $this->postShipment();
-				default:
-					throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
-			}
-		} catch (\Throwable $throwable) {
-			throw new \RuntimeException("Error processing action {$action}", $throwable->getCode(), $throwable);
+		switch ($action) {
+			case 'export':
+				$this->getOrders($store);
+				// no break
+			case 'shipnotify':
+				return $this->postShipment();
+			default:
+				throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
 		}
 	}
 
@@ -157,11 +153,7 @@ class OrdersController extends Controller
 		$count = (int) $query->count();
 		$numPages = (int) ceil($count / $pageSize);
 		$pageNum = $this->getApp()->getRequest()->getParam('page');
-		if (! is_numeric($pageNum) || $pageNum < 1) {
-			$pageNum = 1;
-		} else {
-			$pageNum = (int) $pageNum;
-		}
+		$pageNum = ! is_numeric($pageNum) || $pageNum < 1 ? 1 : (int) $pageNum;
 
 		$query->limit($pageSize);
 		$query->offset(($pageNum - 1) * $pageSize);
@@ -185,9 +177,11 @@ class OrdersController extends Controller
 				if ($fieldName === 'start_date') {
 					return date('Y-m-d H:i:s', $date);
 				}
+
 				return date('Y-m-d H:i:59', $date);
 			}
 		}
+
 		return null;
 	}
 
@@ -237,7 +231,7 @@ class OrdersController extends Controller
 		if ($matrix !== null) {
 			$blockType = $this->getBlockTypeByHandle($matrix->id, $blockTypeHandle);
 
-			if ($blockType && $this->validateShippingInformation($shippingInformation)) {
+			if ($blockType instanceof MatrixBlockType && $this->validateShippingInformation($shippingInformation)) {
 				$block = new MatrixBlock([
 					'ownerId' => $order->id,
 					'fieldId' => $matrix->id,
@@ -323,7 +317,7 @@ class OrdersController extends Controller
 			Event::trigger(static::class, self::FIND_ORDER_EVENT, $findOrderEvent);
 
 			$order = $findOrderEvent->order;
-			if (! $order) {
+			if (! $order instanceof Order) {
 				if ($order = Order::find()->reference($orderNumber)->one()) {
 					/** @var Order $order */
 					return $order;
@@ -334,6 +328,7 @@ class OrdersController extends Controller
 
 			return $order;
 		}
+
 		throw new HttpException(406, 'Order number must be set');
 	}
 
@@ -396,7 +391,7 @@ class OrdersController extends Controller
 	private function validateShippingInformation(array $info): bool
 	{
 		// Requires at least one value
-		foreach ($info as $key => $value) {
+		foreach ($info as $value) {
 			if ($value && trim($value) !== '') {
 				return true;
 			}

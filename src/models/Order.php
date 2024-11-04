@@ -4,8 +4,11 @@ namespace fostercommerce\shipstationconnect\models;
 
 use craft\commerce\elements\Order as CommerceOrder;
 use fostercommerce\shipstationconnect\Plugin;
-use Symfony\Component\Serializer\Annotation\SerializedName;
-use Symfony\Component\Serializer\Attribute\Ignore;
+use JMS\Serializer\Annotation\Exclude;
+use JMS\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\SerializedName;
+use JMS\Serializer\Annotation\Type;
+use JMS\Serializer\Annotation\XmlList;
 use yii\base\InvalidConfigException;
 
 class Order extends Base
@@ -20,96 +23,90 @@ class Order extends Base
 	 */
 	public const LONG_FIELD_LIMIT = 1000;
 
+	#[Groups(['export'])]
 	#[SerializedName('OrderID')]
 	public int $orderId;
 
+	#[Groups(['export'])]
 	#[SerializedName('OrderNumber')]
 	public string $orderNumber;
 
+	#[Groups(['export'])]
 	#[SerializedName('OrderStatus')]
-	public string $orderStatus;
+	public ?string $orderStatus = null;
 
+	#[Groups(['export'])]
 	#[SerializedName('OrderTotal')]
 	public float $orderTotal;
 
+	#[Groups(['export'])]
 	#[SerializedName('TaxAmount')]
 	public float $taxAmount;
 
+	#[Groups(['export'])]
 	#[SerializedName('ShippingAmount')]
 	public float $shippingAmount;
 
+	#[Groups(['export'])]
 	#[SerializedName('LastModified')]
-	public ?string $lastModifiedDate = null;
+	#[Type("DateTime<'n/j/Y H:m'>")]
+	public ?\DateTime $lastModifiedDate = null;
 
+	#[Groups(['export'])]
 	#[SerializedName('PaymentMethod')]
 	public ?string $paymentMethod = null;
 
+	#[Groups(['export'])]
 	#[SerializedName('ShippingMethod')]
 	public string $shippingMethod;
 
 	/**
 	 * @var Item[]
 	 */
+	#[Groups(['export'])]
 	#[SerializedName('Items')]
+	#[XmlList(entry: 'Item')]
 	public array $items;
 
+	#[Groups(['export'])]
 	#[SerializedName('Customer')]
-	public ?Customer $customer;
+	public ?Customer $customer = null;
 
+	#[Groups(['export'])]
 	#[SerializedName('InternalNotes')]
 	public string $internalNotes = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('Gift')]
 	public bool $gift = false;
 
-	#[Ignore]
+	#[Exclude]
 	public CommerceOrder $parentOrder;
 
+	#[Groups(['export'])]
 	#[SerializedName('OrderDate')]
-	private ?string $orderDate = null;
+	#[Type("DateTime<'n/j/Y H:m'>")]
+	public ?\DateTime $orderDate = null;
 
+	#[Groups(['export'])]
 	#[SerializedName('CustomField1')]
 	private string $customField1 = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('CustomField2')]
 	private string $customField2 = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('CustomField3')]
 	private string $customField3 = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('CustomerNotes')]
 	private string $customerNotes = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('GiftMessage')]
 	private string $giftMessage = '';
-
-	public function getOrderDate(): ?string
-	{
-		return $this->orderDate;
-	}
-
-	public function setOrderDate(string|\DateTime $date): void
-	{
-		if (is_string($date)) {
-			$this->orderDate = $date;
-		} else {
-			$this->orderDate = self::formatDate($date);
-		}
-	}
-
-	public function getLastModifiedDate(): ?string
-	{
-		return $this->orderDate;
-	}
-
-	public function setLastModifiedDate(string|\DateTime $date): void
-	{
-		if (is_string($date)) {
-			$this->lastModifiedDate = $date;
-		} else {
-			$this->lastModifiedDate = self::formatDate($date);
-		}
-	}
 
 	public function setCustomField1(string $customField1): void
 	{
@@ -190,6 +187,27 @@ class Order extends Base
 	}
 
 	/**
+	 * @return array<int, array<int, string>>
+	 */
+	public function rules(): array
+	{
+		return [
+			['customer', 'required'],
+			['customer', 'validateCustomer'],
+			['orderStatus', 'required'],
+		];
+	}
+
+	public function validateCustomer(string $customerAttribute): void
+	{
+		if ($this->customer instanceof Customer && ! $this->customer->validate()) {
+			foreach ($this->customer->getErrors() as $attribute => $error) {
+				$this->addError("{$customerAttribute}.{$attribute}", $error);
+			}
+		}
+	}
+
+	/**
 	 * @throws InvalidConfigException
 	 */
 	public static function fromCommerceOrder(CommerceOrder $commerceOrder): self
@@ -204,33 +222,20 @@ class Order extends Base
 			$items[] = Item::asAdjustment($totalDiscount);
 		}
 
-		$order = new self([
+		return new self([
 			'orderId' => "{$prefix}{$commerceOrder->id}",
 			'orderNumber' => $commerceOrder->reference,
 			'orderStatus' => $commerceOrder->getOrderStatus()?->handle,
 			'orderTotal' => round($commerceOrder->totalPrice, 2),
 			'taxAmount' => $commerceOrder->getTotalTax(),
 			'shippingAmount' => $commerceOrder->getTotalShippingCost(),
-			'orderDate' => self::formatDate($commerceOrder->dateOrdered ?? $commerceOrder->dateCreated),
-			'lastModifiedDate' => self::formatDate($commerceOrder->dateUpdated ?? $commerceOrder->dateCreated),
+			'orderDate' => $commerceOrder->dateOrdered ?? $commerceOrder->dateCreated,
+			'lastModifiedDate' => $commerceOrder->dateUpdated ?? $commerceOrder->dateCreated,
 			'paymentMethod' => $commerceOrder->getPaymentSource()?->description,
 			'shippingMethod' => $commerceOrder->shippingMethodHandle,
 			'items' => $items,
 			'customer' => Customer::fromCommerceOrder($commerceOrder),
 			'parentOrder' => $commerceOrder,
 		]);
-
-		$order->validate();
-
-		return $order;
-	}
-
-	private static function formatDate(?\DateTime $date): ?string
-	{
-		if ($date === null) {
-			return null;
-		}
-
-		return date_format($date, 'n/j/Y H:m');
 	}
 }

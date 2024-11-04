@@ -20,18 +20,18 @@ class IsFieldTypeFilter extends AbstractExtension
 	public function getFilters(): array
 	{
 		return [
-			new TwigFilter('is_matrix', [$this, 'isMatrixField']),
-			new TwigFilter('is_dropdown', [$this, 'isDropdownField']),
-			new TwigFilter('is_asset', [$this, 'isAssetField']),
+			new TwigFilter('is_matrix', $this->isMatrixField(...)),
+			new TwigFilter('is_dropdown', $this->isDropdownField(...)),
+			new TwigFilter('is_asset', $this->isAssetField(...)),
 		];
 	}
 
 	public function getFunctions(): array
 	{
 		return [
-			new TwigFunction('is_matrix', [$this, 'isMatrixField']),
-			new TwigFunction('is_dropdown', [$this, 'isDropdownField']),
-			new TwigFunction('is_asset', [$this, 'isAssetField']),
+			new TwigFunction('is_matrix', $this->isMatrixField(...)),
+			new TwigFunction('is_dropdown', $this->isDropdownField(...)),
+			new TwigFunction('is_asset', $this->isAssetField(...)),
 		];
 	}
 
