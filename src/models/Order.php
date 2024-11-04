@@ -3,9 +3,9 @@
 namespace fostercommerce\shipstationconnect\models;
 
 use craft\commerce\elements\Order as CommerceOrder;
-use fostercommerce\shipstationconnect\events\OrderFieldEvent;
 use fostercommerce\shipstationconnect\Plugin;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use yii\base\InvalidConfigException;
 
 class Order extends Base
@@ -39,13 +39,13 @@ class Order extends Base
 	public float $shippingAmount;
 
 	#[SerializedName('OrderDate')]
-	public ?\DateTime $orderDate;
+	public ?\DateTime $orderDate = null;
 
 	#[SerializedName('LastModified')]
-	public ?\DateTime $lastModifiedDate;
+	public ?\DateTime $lastModifiedDate = null;
 
 	#[SerializedName('PaymentMethod')]
-	public ?string $paymentMethod; // CDATA
+	public ?string $paymentMethod = null;
 
 	#[SerializedName('ShippingMethod')]
 	public string $shippingMethod;
@@ -59,30 +59,110 @@ class Order extends Base
 	#[SerializedName('Customer')]
 	public ?Customer $customer;
 
-	#[SerializedName('CustomField1')]
-	public string $customField1;
-
-	#[SerializedName('CustomField2')]
-	public string $customField2;
-
-	#[SerializedName('CustomField3')]
-	public string $customField3;
-
 	#[SerializedName('InternalNotes')]
 	public string $internalNotes;
 
-	#[SerializedName('CustomerNotes')]
-	public string $customerNotes;
-
 	#[SerializedName('Gift')]
-	public bool $gift;
+	public bool $gift = false;
+
+	#[Ignore]
+	public CommerceOrder $parentOrder;
+
+	#[SerializedName('CustomField1')]
+	private string $customField1;
+
+	#[SerializedName('CustomField2')]
+	private string $customField2;
+
+	#[SerializedName('CustomField3')]
+	private string $customField3;
+
+	#[SerializedName('CustomerNotes')]
+	private string $customerNotes;
 
 	#[SerializedName('GiftMessage')]
-	public string $giftMessage;
+	private string $giftMessage;
+
+	public function setCustomField1(string $customField1): void
+	{
+		$this->customField1 = $customField1;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getCustomField1(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->customField1)), 0, self::SHORT_FIELD_LIMIT);
+	}
+
+	public function setCustomField2(string $customField2): void
+	{
+		$this->customField2 = $customField2;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getCustomField2(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->customField2)), 0, self::SHORT_FIELD_LIMIT);
+	}
+
+	public function setCustomField3(string $customField3): void
+	{
+		$this->customField3 = $customField3;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getCustomField3(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->customField3)), 0, self::SHORT_FIELD_LIMIT);
+	}
+
+	public function setInternalNotes(string $internalNotes): void
+	{
+		$this->internalNotes = $internalNotes;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getInternalNotes(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->internalNotes)), 0, self::LONG_FIELD_LIMIT);
+	}
+
+	public function setCustomerNotes(string $customerNotes): void
+	{
+		$this->customerNotes = $customerNotes;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getCustomerNotes(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->customerNotes)), 0, self::LONG_FIELD_LIMIT);
+	}
+
+	public function setGiftMessage(string $giftMessage): void
+	{
+		$this->giftMessage = $giftMessage;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getGiftMessage(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->giftMessage)), 0, self::LONG_FIELD_LIMIT);
+	}
 
 	/**
 	 * @throws InvalidConfigException
-	 * @throws \JsonException
 	 */
 	public static function fromCommerceOrder(CommerceOrder $commerceOrder): self
 	{
@@ -98,7 +178,7 @@ class Order extends Base
 
 		$order = new self([
 			'orderId' => "{$prefix}{$commerceOrder->id}",
-			'orderNumber' => static::valueFromFieldEvent(OrderFieldEvent::FIELD_ORDER_NUMBER, $commerceOrder, $commerceOrder->reference),
+			'orderNumber' => $commerceOrder->reference,
 			'orderStatus' => $commerceOrder->getOrderStatus()?->handle,
 			'orderTotal' => round($commerceOrder->totalPrice, 2),
 			'taxAmount' => $commerceOrder->getTotalTax(),
@@ -108,13 +188,7 @@ class Order extends Base
 			'paymentMethod' => $commerceOrder->getPaymentSource()?->description,
 			'items' => $items,
 			'customer' => Customer::fromCommerceOrder($commerceOrder),
-			'customField1' => substr(htmlspecialchars(static::asString(static::valueFromFieldEvent(OrderFieldEvent::FIELD_CUSTOM_FIELD_1, $commerceOrder))), 0, self::SHORT_FIELD_LIMIT),
-			'customField2' => substr(htmlspecialchars(static::asString(static::valueFromFieldEvent(OrderFieldEvent::FIELD_CUSTOM_FIELD_2, $commerceOrder))), 0, self::SHORT_FIELD_LIMIT),
-			'customField3' => substr(htmlspecialchars(static::asString(static::valueFromFieldEvent(OrderFieldEvent::FIELD_CUSTOM_FIELD_3, $commerceOrder))), 0, self::SHORT_FIELD_LIMIT),
-			'internalNotes' => substr(htmlspecialchars(static::asString(static::valueFromFieldEvent(OrderFieldEvent::FIELD_INTERNAL_NOTES, $commerceOrder))), 0, self::LONG_FIELD_LIMIT),
-			'customerNotes' => substr(htmlspecialchars(static::asString(static::valueFromFieldEvent(OrderFieldEvent::FIELD_CUSTOMER_NOTES, $commerceOrder))), 0, self::LONG_FIELD_LIMIT),
-			'gift' => empty(static::valueFromFieldEvent(OrderFieldEvent::FIELD_GIFT, $commerceOrder)) ? 'true' : 'false',
-			'giftMessage' => substr(htmlspecialchars(static::asString(static::valueFromFieldEvent(OrderFieldEvent::FIELD_GIFT_MESSAGE, $commerceOrder))), 0, self::LONG_FIELD_LIMIT),
+			'parentOrder' => $commerceOrder,
 		]);
 
 		$order->validate();

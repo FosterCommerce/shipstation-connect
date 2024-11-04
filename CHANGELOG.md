@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0 - Unreleased
+
+- Requires PHP 8.1 or higher.
+- Added `Xml::ORDER_EVENT` event.
+- Added `OrderEvent`.
+- Removed the `Xml::ORDER_FIELD_EVENT` event. `Xml::ORDER_EVENT` should be used instead.
+- Removed `OrderFieldEvent`. All details about an order can be updated in a single event now.
+
 ## 2.1.0 - 2024-05-24
 
 ### Added
