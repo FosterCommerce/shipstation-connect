@@ -10,39 +10,49 @@ use craft\elements\db\AssetQuery;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
 use fostercommerce\shipstationconnect\Plugin;
-use Symfony\Component\Serializer\Annotation\SerializedName;
+use JMS\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\SerializedName;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
 class Item extends Base
 {
+	#[Groups(['export'])]
 	#[SerializedName('SKU')]
 	public string $sku;
 
+	#[Groups(['export'])]
 	#[SerializedName('Name')]
 	public string $name;
 
+	#[Groups(['export'])]
 	#[SerializedName('Weight')]
 	public float $weight;
 
+	#[Groups(['export'])]
 	#[SerializedName('Quantity')]
 	public int $quantity;
 
+	#[Groups(['export'])]
 	#[SerializedName('UnitPrice')]
 	public float $unitPrice;
 
+	#[Groups(['export'])]
 	#[SerializedName('ImageUrl')]
 	public string $imageUrl = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('WeightUnits')]
 	public string $weightUnits = '';
 
+	#[Groups(['export'])]
 	#[SerializedName('Adjustment')]
 	public bool $adjustment = false;
 
 	/**
-	 * @var array<string, string>
+	 * @var Option[]
 	 */
+	#[Groups(['export'])]
 	#[SerializedName('Options')]
 	public array $options = [];
 
@@ -86,6 +96,7 @@ class Item extends Base
 				/** @var ?AssetQuery<int, Asset> $assetQuery */
 				$assetQuery = $purchasable->product->{$productImagesHandle};
 			}
+
 			if ($assetQuery !== null) {
 				/** @var ?Asset $asset */
 				$asset = $assetQuery->one();
@@ -105,7 +116,7 @@ class Item extends Base
 			'unitPrice' => round($lineItem->salePrice, 2),
 			'imageUrl' => $imageUrl,
 			'options' => collect($lineItem->options)
-				->map(static fn ($value, $key) => new Option([
+				->map(static fn ($value, $key): Option => new Option([
 					'name' => $key,
 					'value' => $value,
 				]))

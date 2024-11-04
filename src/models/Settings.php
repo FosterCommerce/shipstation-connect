@@ -21,6 +21,8 @@ class Settings extends Model
 
 	public string $orderIdPrefix = '';
 
+	public bool $failOnValidation = false;
+
 	public ?string $productImagesHandle = null;
 
 	public string $shippedStatusHandle = 'shipped';
