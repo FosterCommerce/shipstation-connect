@@ -80,8 +80,8 @@ class Item extends Base
 		/** @var float $weight */
 		[$weightUnits, $weight] = match (CommercePlugin::getInstance()?->settings->weightUnits) {
 			// kilograms need to be converted to grams for ShipStation
-			'kg' => ['Grams', round($lineItem->weight * 1000, 2)],
-			default => ['Pounds', round($lineItem->weight, 2)],
+			'lb' => ['Pounds', round($lineItem->weight, 2)],
+			default => ['Grams', round($lineItem->weight * 1000, 2)],
 		};
 
 		$imageUrl = null;
