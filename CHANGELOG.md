@@ -5,6 +5,7 @@
 - Requires PHP 8.1 or higher.
 - Added `Xml::ORDER_EVENT` event.
 - Added `OrderEvent`.
+- Added `failOnValidation` config item and toggle in settings UI.
 - Removed the `Xml::ORDER_FIELD_EVENT` event. `Xml::ORDER_EVENT` should be used instead.
 - Removed `OrderFieldEvent`. All details about an order can be updated in a single event now.
 
