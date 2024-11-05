@@ -1,4 +1,5 @@
 ![Header](resources/img/header.png)
+
 # ShipStation Connect for Craft CMS 4 and Commerce 4
 
 A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
@@ -115,57 +116,50 @@ plugin will add the shipping information to the Shipping Information field on
 the order and set the order to the Craft status paired with your ShipStation
 stores Shipped status.
 
-
 ## Adding phone numbers to addresses sent to Shipstation
 
-Addresses are now part of Craft rather than Commerce, and the Phone number field was dropped from the address model. It is now necessary to add a custom field to the Address fields to store phone numbers.
+Addresses are now part of Craft rather than Commerce, and the Phone number field was dropped from the address model. It
+is now necessary to add a custom field to the Address fields to store phone numbers.
 
-The plugin setting gives you the option to set the field handle that you are using for phone numbers. The contents of this field will then be sent to Shipstation within the address portions of the order data.
+The plugin setting gives you the option to set the field handle that you are using for phone numbers. The contents of
+this field will then be sent to Shipstation within the address portions of the order data.
 
 ## Custom Fields
 
-You can customize the data that is sent to ShipStation by listening to the `OrderFieldEvent` event in a custom module or plugin, and set the values that you want per field, like in the following example:
+You can customize the data that is sent to ShipStation by listening to the `OrderEvent` event in a custom module or
+plugin, and set the values that you want per field, similar to the following example:
 
 ```php
-use yii\base\Event;
+use craft\base\Event;
+use fostercommerce\shipstationconnect\models\Order;
+use fostercommerce\shipstationconnect\events\OrderEvent;
 use fostercommerce\shipstationconnect\services\Xml;
-use fostercommerce\shipstationconnect\events\OrderFieldEvent;
 
 Event::on(
-    Xml::class,
-    Xml::ORDER_FIELD_EVENT,
-    function (OrderFieldEvent $e) {
-        $fieldName = $e->field;
-        $order = $e->order;
+	Xml::class,
+	Xml::ORDER_EVENT,
+	static function (OrderEvent $e) {
+	  // The transformed order - This is the data that will be sent to ShipStation.
+		$order = $e->order;
+		
+		// The source Commerce Order that was used to create the transformed order.
+		$commerceOrder = $order->getParent();
 
-        if ($fieldName === OrderFieldEvent::FIELD_ORDER_NUMBER) {
-            // Set ShipStation's order number to the order ID, instead of the default reference number
-            $e->value = $order->id;
-        } elseif ($fieldName === OrderFieldEvent::FIELD_CUSTOM_FIELD_1) {
-            // Store the reference number in a custom field
-            $e->value = 'Order Reference: ' . $order->reference;
-        }
-    }
+		// Use full order number for OrderNumber
+		$order->setOrderNumber($commerceOrder->number);
+
+		// Set a custom field value
+		$order->setCustomField1(Currency::formatAsCurrency($commerceOrder->getAdjustmentsTotal(), 'USD'));
+
+		// Set internal notes
+		$order->setInternalNotes('Custom Field 1: Adjustments Total');
+	}
 );
 ```
 
 `OrderFieldEvent` properties:
 
-- `field` - The custom field name, one of the following:
-  |PHP Constant|Value|
-  |---|---|
-  |`OrderFieldEvent::FIELD_ORDER_NUMBER`|`'OrderNumber'`|
-  |`OrderFieldEvent::FIELD_SHIPPING_METHOD`|`'ShippingMethod'`|
-  |`OrderFieldEvent::FIELD_CUSTOM_FIELD_1`|`'CustomField1'`|
-  |`OrderFieldEvent::FIELD_CUSTOM_FIELD_2`|`'CustomField2'`|
-  |`OrderFieldEvent::FIELD_CUSTOM_FIELD_3`|`'CustomField3'`|
-  |`OrderFieldEvent::FIELD_INTERNAL_NOTES`|`'InternalNotes'`|
-  |`OrderFieldEvent::FIELD_CUSTOMER_NOTES`|`'CustomerNotes'`|
-  |`OrderFieldEvent::FIELD_GIFT`|`'Gift'`|
-  |`OrderFieldEvent::FIELD_GIFT_MESSAGE`|`'GiftMessage'`|
-- `order` - Current order data.
-- `value` - The data to set on this field.
-- `cdata` - Whether or not to wrap the value in a `CDATA` block.
+- `order` - The order that has been transformed into a format ready to be exported to ShipStation. 
 
 If you've changed the `OrderFieldEvent::FIELD_ORDER_NUMBER` field to be anything
 other than the order's reference number, you'll need to listen to the
@@ -174,7 +168,8 @@ In the example above, we're changing it to be the order's ID, so we would need
 to fetch the order by ID:
 
 ```php
-use yii\base\Event;
+use craft\base\Event;
+use craft\commerce\elements\Order as CommerceOrder;
 use fostercommerce\shipstationconnect\controllers\OrdersController;
 use fostercommerce\shipstationconnect\events\FindOrderEvent;
 
@@ -182,11 +177,8 @@ Event::on(
     OrdersController::class,
     OrdersController::FIND_ORDER_EVENT,
     function (FindOrderEvent $e) {
-        $order = Order::find()->id($e->orderNumber)->one();
-
-        if ($order) {
-            $e->order = $order;
-        }
+        // Set the order so that ShipStation Connect can update it's shipping details.
+        $this->order = CommerceOrder::find()->number($e->orderNumber)->one();
     }
 );
 ```
