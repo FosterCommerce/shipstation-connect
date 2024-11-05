@@ -157,7 +157,7 @@ Event::on(
 );
 ```
 
-`OrderFieldEvent` properties:
+`OrderEvent` properties:
 
 - `order` - The order that has been transformed into a format ready to be exported to ShipStation. 
 
