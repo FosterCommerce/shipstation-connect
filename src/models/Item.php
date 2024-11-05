@@ -19,48 +19,144 @@ class Item extends Base
 {
 	#[Groups(['export'])]
 	#[SerializedName('SKU')]
-	public string $sku;
+	private string $sku;
 
 	#[Groups(['export'])]
 	#[SerializedName('Name')]
-	public string $name;
+	private string $name;
 
 	#[Groups(['export'])]
 	#[SerializedName('Weight')]
-	public float $weight;
+	private float $weight;
 
 	#[Groups(['export'])]
 	#[SerializedName('Quantity')]
-	public int $quantity;
+	private int $quantity;
 
 	#[Groups(['export'])]
 	#[SerializedName('UnitPrice')]
-	public float $unitPrice;
+	private float $unitPrice;
 
 	#[Groups(['export'])]
 	#[SerializedName('ImageUrl')]
-	public string $imageUrl = '';
+	private ?string $imageUrl = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('WeightUnits')]
-	public string $weightUnits = '';
+	private string $weightUnits = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('Adjustment')]
-	public bool $adjustment = false;
+	private bool $adjustment = false;
 
 	/**
 	 * @var Option[]
 	 */
 	#[Groups(['export'])]
 	#[SerializedName('Options')]
-	public array $options = [];
+	private array $options = [];
 
-	public static function asAdjustment(float $totalDiscount): self
+	public function getSku(): string
+	{
+		return $this->sku;
+	}
+
+	public function setSku(string $sku): void
+	{
+		$this->sku = $sku;
+	}
+
+	public function getName(): string
+	{
+		return $this->name;
+	}
+
+	public function setName(string $name): void
+	{
+		$this->name = $name;
+	}
+
+	public function getWeight(): float
+	{
+		return $this->weight;
+	}
+
+	public function setWeight(float $weight): void
+	{
+		$this->weight = $weight;
+	}
+
+	public function getQuantity(): int
+	{
+		return $this->quantity;
+	}
+
+	public function setQuantity(int $quantity): void
+	{
+		$this->quantity = $quantity;
+	}
+
+	public function getUnitPrice(): float
+	{
+		return $this->unitPrice;
+	}
+
+	public function setUnitPrice(float $unitPrice): void
+	{
+		$this->unitPrice = $unitPrice;
+	}
+
+	public function getImageUrl(): ?string
+	{
+		return $this->imageUrl;
+	}
+
+	public function setImageUrl(?string $imageUrl): void
+	{
+		$this->imageUrl = $imageUrl;
+	}
+
+	public function getWeightUnits(): string
+	{
+		return $this->weightUnits;
+	}
+
+	public function setWeightUnits(string $weightUnits): void
+	{
+		$this->weightUnits = $weightUnits;
+	}
+
+	public function isAdjustment(): bool
+	{
+		return $this->adjustment;
+	}
+
+	public function setAdjustment(bool $adjustment): void
+	{
+		$this->adjustment = $adjustment;
+	}
+
+	/**
+	 * @return Option[]
+	 */
+	public function getOptions(): array
+	{
+		return $this->options;
+	}
+
+	/**
+	 * @param Option[] $options
+	 */
+	public function setOptions(array $options): void
+	{
+		$this->options = $options;
+	}
+
+	public static function asAdjustment(string $name, float $totalDiscount): self
 	{
 		return new self([
 			'sku' => '',
-			'name' => 'couponCode',
+			'name' => trim($name),
 			'quantity' => 1,
 			'unitPrice' => round($totalDiscount, 2),
 			'adjustment' => true,

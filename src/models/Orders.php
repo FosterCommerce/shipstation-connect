@@ -14,14 +14,40 @@ class Orders extends Model
 {
 	#[Groups(['export'])]
 	#[XmlAttribute]
-	public int $pages;
+	private int $pages;
 
 	/**
 	 * @var Order[]
 	 */
 	#[Groups(['export'])]
 	#[XmlList(inline: true, entry: 'Order')]
-	public array $orders = [];
+	private array $orders = [];
+
+	public function getPages(): int
+	{
+		return $this->pages;
+	}
+
+	public function setPages(int $pages): void
+	{
+		$this->pages = $pages;
+	}
+
+	/**
+	 * @return Order[]
+	 */
+	public function getOrders(): array
+	{
+		return $this->orders;
+	}
+
+	/**
+	 * @param Order[] $orders
+	 */
+	public function setOrders(array $orders): void
+	{
+		$this->orders = $orders;
+	}
 
 	/**
 	 * @param Collection<int, Order> $orders
@@ -30,7 +56,7 @@ class Orders extends Model
 	{
 		return new self([
 			'pages' => $pages,
-			'orders' => $orders,
+			'orders' => $orders->toArray(),
 		]);
 	}
 }

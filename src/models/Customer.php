@@ -13,15 +13,45 @@ class Customer extends Base
 {
 	#[Groups(['export'])]
 	#[SerializedName('CustomerCode')]
-	public string $customerCode;
+	private string $customerCode;
 
 	#[Groups(['export'])]
 	#[SerializedName('BillTo')]
-	public ?Address $billToAddress = null;
+	private ?Address $billToAddress = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('ShipTo')]
-	public ?Address $shipToAddress = null;
+	private ?Address $shipToAddress = null;
+
+	public function getCustomerCode(): string
+	{
+		return $this->customerCode;
+	}
+
+	public function setCustomerCode(string $customerCode): void
+	{
+		$this->customerCode = $customerCode;
+	}
+
+	public function getBillToAddress(): ?Address
+	{
+		return $this->billToAddress;
+	}
+
+	public function setBillToAddress(?Address $billToAddress): void
+	{
+		$this->billToAddress = $billToAddress;
+	}
+
+	public function getShipToAddress(): ?Address
+	{
+		return $this->shipToAddress;
+	}
+
+	public function setShipToAddress(?Address $shipToAddress): void
+	{
+		$this->shipToAddress = $shipToAddress;
+	}
 
 	/**
 	 * @return array<int, array<int, string>>

@@ -12,43 +12,143 @@ class Address extends Base
 {
 	#[Groups(['export'])]
 	#[SerializedName('Company')]
-	public ?string $company = null;
+	private ?string $company = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Address1')]
-	public ?string $address1 = null;
+	private ?string $address1 = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Address2')]
-	public ?string $address2 = null;
+	private ?string $address2 = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('City')]
-	public ?string $city = null;
+	private ?string $city = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('State')]
-	public ?string $state = null;
+	private ?string $state = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('PostalCode')]
-	public ?string $postalCode = null;
+	private ?string $postalCode = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Country')]
-	public string $country;
+	private string $country;
 
 	#[Groups(['export'])]
 	#[SerializedName('Name')]
-	public string $name;
+	private string $name;
 
 	#[Groups(['export'])]
 	#[SerializedName('Phone')]
-	public ?string $phone = null;
+	private ?string $phone = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Email')]
-	public string $email;
+	private string $email;
+
+	public function getCompany(): ?string
+	{
+		return $this->company;
+	}
+
+	public function setCompany(?string $company): void
+	{
+		$this->company = $company;
+	}
+
+	public function getAddress1(): ?string
+	{
+		return $this->address1;
+	}
+
+	public function setAddress1(?string $address1): void
+	{
+		$this->address1 = $address1;
+	}
+
+	public function getAddress2(): ?string
+	{
+		return $this->address2;
+	}
+
+	public function setAddress2(?string $address2): void
+	{
+		$this->address2 = $address2;
+	}
+
+	public function getCity(): ?string
+	{
+		return $this->city;
+	}
+
+	public function setCity(?string $city): void
+	{
+		$this->city = $city;
+	}
+
+	public function getState(): ?string
+	{
+		return $this->state;
+	}
+
+	public function setState(?string $state): void
+	{
+		$this->state = $state;
+	}
+
+	public function getPostalCode(): ?string
+	{
+		return $this->postalCode;
+	}
+
+	public function setPostalCode(?string $postalCode): void
+	{
+		$this->postalCode = $postalCode;
+	}
+
+	public function getCountry(): string
+	{
+		return $this->country;
+	}
+
+	public function setCountry(string $country): void
+	{
+		$this->country = $country;
+	}
+
+	public function getName(): string
+	{
+		return $this->name;
+	}
+
+	public function setName(string $name): void
+	{
+		$this->name = $name;
+	}
+
+	public function getPhone(): ?string
+	{
+		return $this->phone;
+	}
+
+	public function setPhone(?string $phone): void
+	{
+		$this->phone = $phone;
+	}
+
+	public function getEmail(): string
+	{
+		return $this->email;
+	}
+
+	public function setEmail(string $email): void
+	{
+		$this->email = $email;
+	}
 
 	public static function fromCommerceAddress(CommerceOrder $commerceOrder, ?CraftAddress $commerceAddress): ?self
 	{
