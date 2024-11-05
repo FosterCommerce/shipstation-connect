@@ -25,40 +25,40 @@ class Order extends Base
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderID')]
-	public int $orderId;
+	private int $orderId;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderNumber')]
-	public string $orderNumber;
+	private string $orderNumber;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderStatus')]
-	public ?string $orderStatus = null;
+	private ?string $orderStatus = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderTotal')]
-	public float $orderTotal;
+	private float $orderTotal;
 
 	#[Groups(['export'])]
 	#[SerializedName('TaxAmount')]
-	public float $taxAmount;
+	private float $taxAmount;
 
 	#[Groups(['export'])]
 	#[SerializedName('ShippingAmount')]
-	public float $shippingAmount;
+	private float $shippingAmount;
 
 	#[Groups(['export'])]
 	#[SerializedName('LastModified')]
 	#[Type("DateTime<'n/j/Y H:m'>")]
-	public ?\DateTime $lastModifiedDate = null;
+	private ?\DateTime $lastModifiedDate = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('PaymentMethod')]
-	public ?string $paymentMethod = null;
+	private ?string $paymentMethod = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('ShippingMethod')]
-	public string $shippingMethod;
+	private ?string $shippingMethod = null;
 
 	/**
 	 * @var Item[]
@@ -66,27 +66,27 @@ class Order extends Base
 	#[Groups(['export'])]
 	#[SerializedName('Items')]
 	#[XmlList(entry: 'Item')]
-	public array $items;
+	private array $items;
 
 	#[Groups(['export'])]
 	#[SerializedName('Customer')]
-	public ?Customer $customer = null;
+	private ?Customer $customer = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('InternalNotes')]
-	public string $internalNotes = '';
+	private string $internalNotes = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('Gift')]
-	public bool $gift = false;
-
-	#[Exclude]
-	public CommerceOrder $parentOrder;
+	private bool $gift = false;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderDate')]
 	#[Type("DateTime<'n/j/Y H:m'>")]
-	public ?\DateTime $orderDate = null;
+	private ?\DateTime $orderDate = null;
+
+	#[Exclude]
+	private CommerceOrder $parent;
 
 	#[Groups(['export'])]
 	#[SerializedName('CustomField1')]
@@ -107,6 +107,160 @@ class Order extends Base
 	#[Groups(['export'])]
 	#[SerializedName('GiftMessage')]
 	private string $giftMessage = '';
+
+	public function getOrderId(): int
+	{
+		return $this->orderId;
+	}
+
+	public function setOrderId(int $orderId): void
+	{
+		$this->orderId = $orderId;
+	}
+
+	public function getOrderNumber(): string
+	{
+		return $this->orderNumber;
+	}
+
+	public function setOrderNumber(string $orderNumber): void
+	{
+		$this->orderNumber = $orderNumber;
+	}
+
+	public function getOrderStatus(): ?string
+	{
+		return $this->orderStatus;
+	}
+
+	public function setOrderStatus(?string $orderStatus): void
+	{
+		$this->orderStatus = $orderStatus;
+	}
+
+	public function getOrderTotal(): float
+	{
+		return $this->orderTotal;
+	}
+
+	public function setOrderTotal(float $orderTotal): void
+	{
+		$this->orderTotal = $orderTotal;
+	}
+
+	public function getTaxAmount(): float
+	{
+		return $this->taxAmount;
+	}
+
+	public function setTaxAmount(float $taxAmount): void
+	{
+		$this->taxAmount = $taxAmount;
+	}
+
+	public function getShippingAmount(): float
+	{
+		return $this->shippingAmount;
+	}
+
+	public function setShippingAmount(float $shippingAmount): void
+	{
+		$this->shippingAmount = $shippingAmount;
+	}
+
+	public function getLastModifiedDate(): ?\DateTime
+	{
+		return $this->lastModifiedDate;
+	}
+
+	public function setLastModifiedDate(?\DateTime $lastModifiedDate): void
+	{
+		$this->lastModifiedDate = $lastModifiedDate;
+	}
+
+	public function getPaymentMethod(): ?string
+	{
+		return $this->paymentMethod;
+	}
+
+	public function setPaymentMethod(?string $paymentMethod): void
+	{
+		$this->paymentMethod = $paymentMethod;
+	}
+
+	public function getShippingMethod(): ?string
+	{
+		return $this->shippingMethod;
+	}
+
+	public function setShippingMethod(?string $shippingMethod): void
+	{
+		$this->shippingMethod = $shippingMethod;
+	}
+
+	/**
+	 * @return Item[]
+	 */
+	public function getItems(): array
+	{
+		return $this->items;
+	}
+
+	/**
+	 * @param Item[] $items
+	 */
+	public function setItems(array $items): void
+	{
+		$this->items = $items;
+	}
+
+	public function getCustomer(): ?Customer
+	{
+		return $this->customer;
+	}
+
+	public function setCustomer(?Customer $customer): void
+	{
+		$this->customer = $customer;
+	}
+
+	/**
+	 * @throws \JsonException
+	 */
+	public function getInternalNotes(): string
+	{
+		return substr(htmlspecialchars(static::asString($this->internalNotes)), 0, self::LONG_FIELD_LIMIT);
+	}
+
+	public function setInternalNotes(string $internalNotes): void
+	{
+		$this->internalNotes = $internalNotes;
+	}
+
+	public function isGift(): bool
+	{
+		return $this->gift;
+	}
+
+	public function setGift(bool $gift): void
+	{
+		$this->gift = $gift;
+	}
+
+	public function getOrderDate(): ?\DateTime
+	{
+		return $this->orderDate;
+	}
+
+	public function setOrderDate(?\DateTime $orderDate): void
+	{
+		$this->orderDate = $orderDate;
+	}
+
+	public function getParent(): CommerceOrder
+	{
+		return $this->parent;
+	}
 
 	public function setCustomField1(string $customField1): void
 	{
@@ -145,19 +299,6 @@ class Order extends Base
 	public function getCustomField3(): string
 	{
 		return substr(htmlspecialchars(static::asString($this->customField3)), 0, self::SHORT_FIELD_LIMIT);
-	}
-
-	public function setInternalNotes(string $internalNotes): void
-	{
-		$this->internalNotes = $internalNotes;
-	}
-
-	/**
-	 * @throws \JsonException
-	 */
-	public function getInternalNotes(): string
-	{
-		return substr(htmlspecialchars(static::asString($this->internalNotes)), 0, self::LONG_FIELD_LIMIT);
 	}
 
 	public function setCustomerNotes(string $customerNotes): void
@@ -219,7 +360,7 @@ class Order extends Base
 		// Include a discount as a line item if there is one.
 		$totalDiscount = $commerceOrder->getTotalDiscount();
 		if ($totalDiscount !== 0.0) {
-			$items[] = Item::asAdjustment($totalDiscount);
+			$items[] = Item::asAdjustment('couponCode', $totalDiscount);
 		}
 
 		return new self([
@@ -235,7 +376,12 @@ class Order extends Base
 			'shippingMethod' => $commerceOrder->shippingMethodHandle,
 			'items' => $items,
 			'customer' => Customer::fromCommerceOrder($commerceOrder),
-			'parentOrder' => $commerceOrder,
+			'parent' => $commerceOrder,
 		]);
+	}
+
+	protected function setParent(CommerceOrder $parent): void
+	{
+		$this->parent = $parent;
 	}
 }

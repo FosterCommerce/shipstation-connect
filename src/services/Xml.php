@@ -30,12 +30,12 @@ class Xml extends Component
 		/** @var Collection<int, Order> $failed */
 		[$orders, $failed] = collect($commerceOrders)
 			->map(Order::fromCommerceOrder(...))
-			->map(static function ($order): Order {
+			->map(static function (Order $order): Order {
 				$orderEvent = new OrderEvent([
-					'transformedOrder' => $order,
+					'order' => $order,
 				]);
 				Event::trigger(static::class, self::ORDER_EVENT, $orderEvent);
-				return $orderEvent->transformedOrder;
+				return $orderEvent->order;
 			})
 			->reduceSpread(static function (Collection $orders, Collection $failed, Order $order): array {
 				/** @var Collection<int, Order> $orders */
@@ -61,7 +61,7 @@ class Xml extends Component
 			$attribute = key($firstErrrors);
 			$value = reset($firstErrrors[$attribute]);
 
-			throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->orderId}: {$attribute} - {$value}");
+			throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->getOrderId()}: {$attribute} - {$value}");
 		}
 
 		$serializer = SerializerBuilder::create()->build();

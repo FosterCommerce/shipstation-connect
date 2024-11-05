@@ -9,9 +9,29 @@ class Option extends Base
 {
 	#[Groups(['export'])]
 	#[SerializedName('Name')]
-	public string $name;
+	private string $name;
 
 	#[Groups(['export'])]
 	#[SerializedName('Value')]
-	public string $value;
+	private string $value;
+
+	public function getName(): string
+	{
+		return $this->name;
+	}
+
+	public function setName(string $name): void
+	{
+		$this->name = $name;
+	}
+
+	public function getValue(): string
+	{
+		return $this->value;
+	}
+
+	public function setValue(string $value): void
+	{
+		$this->value = $value;
+	}
 }
