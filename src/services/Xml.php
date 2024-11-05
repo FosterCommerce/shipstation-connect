@@ -59,7 +59,7 @@ class Xml extends Component
 			$firstFailedOrder = $failed->first();
 			$firstErrrors = $firstFailedOrder->getFirstErrors();
 			$attribute = key($firstErrrors);
-			$value = reset($firstErrrors[$attribute]);
+			$value = reset($firstErrrors);
 
 			throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->getOrderId()}: {$attribute} - {$value}");
 		}
