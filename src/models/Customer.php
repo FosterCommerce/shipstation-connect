@@ -85,8 +85,8 @@ class Customer extends Base
 		return $customer instanceof User
 			? new self([
 				'customerCode' => $customer->id,
-				'billToAddress' => Address::fromCommerceAddress($commerceOrder, $billingAddress),
-				'shipToAddress' => Address::fromCommerceAddress($commerceOrder, $shippingAddress),
+				'billToAddress' => Address::fromCommerceAddress($commerceOrder, $billingAddress, true),
+				'shipToAddress' => Address::fromCommerceAddress($commerceOrder, $shippingAddress, false),
 			])
 			: null;
 	}

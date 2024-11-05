@@ -49,7 +49,7 @@ class Order extends Base
 
 	#[Groups(['export'])]
 	#[SerializedName('LastModified')]
-	#[Type("DateTime<'n/j/Y H:m'>")]
+	#[Type("DateTime<'n/j/Y H:i'>")]
 	private ?\DateTime $lastModifiedDate = null;
 
 	#[Groups(['export'])]
@@ -82,7 +82,7 @@ class Order extends Base
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderDate')]
-	#[Type("DateTime<'n/j/Y H:m'>")]
+	#[Type("DateTime<'n/j/Y H:i'>")]
 	private ?\DateTime $orderDate = null;
 
 	#[Exclude]

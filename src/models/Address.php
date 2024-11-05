@@ -150,7 +150,7 @@ class Address extends Base
 		$this->email = $email;
 	}
 
-	public static function fromCommerceAddress(CommerceOrder $commerceOrder, ?CraftAddress $commerceAddress): ?self
+	public static function fromCommerceAddress(CommerceOrder $commerceOrder, ?CraftAddress $commerceAddress, bool $includeEmail): ?self
 	{
 		if (! $commerceAddress instanceof CraftAddress) {
 			return null;
@@ -159,12 +159,11 @@ class Address extends Base
 		$phoneNumberFieldHandle = Plugin::getInstance()?->settings->phoneNumberFieldHandle;
 		$phone = $commerceAddress->{$phoneNumberFieldHandle} ?? null;
 
-		return new self([
+		$address = new self([
 			'name' => $commerceAddress->fullName
 				?? $commerceOrder->getCustomer()?->fullName
 				?? 'Unknown',
 			'phone' => $phone,
-			'email' => $commerceOrder->email,
 			'company' => $commerceAddress->organization,
 			'address1' => $commerceAddress->addressLine1,
 			'address2' => $commerceAddress->addressLine2,
@@ -173,5 +172,11 @@ class Address extends Base
 			'postalCode' => $commerceAddress->postalCode,
 			'country' => $commerceAddress->countryCode,
 		]);
+
+		if ($includeEmail) {
+			$address->setEmail($commerceOrder->email);
+		}
+
+		return $address;
 	}
 }
