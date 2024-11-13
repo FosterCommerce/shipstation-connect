@@ -58,7 +58,12 @@ class Xml extends Component
 			$firstFailedOrder = $failed->first();
 			$firstErrrors = $firstFailedOrder->getFirstErrors();
 			$attribute = key($firstErrrors);
-			$value = reset($firstErrrors);
+			$keys = array_keys($firstErrrors);
+			$value = $firstErrrors[$keys[0]][0] ?? 'Unknown validation error';
+			if (is_array($value)) {
+				// Weird nested array of validation errors
+				$value = $value[0];
+			}
 
 			if (Plugin::getInstance()?->settings->failOnValidation ?? false) {
 				throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->getOrderId()}: {$attribute} - {$value}");

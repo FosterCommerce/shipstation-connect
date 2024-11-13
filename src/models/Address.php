@@ -5,54 +5,100 @@ namespace fostercommerce\shipstationconnect\models;
 use craft\commerce\elements\Order as CommerceOrder;
 use craft\elements\Address as CraftAddress;
 use fostercommerce\shipstationconnect\Plugin;
+use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation\AccessType;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\SerializedName;
+use JMS\Serializer\Annotation\VirtualProperty;
 
+#[AccessType([
+	'type' => 'public_method',
+])]
 class Address extends Base
 {
 	#[Groups(['export'])]
 	#[SerializedName('Company')]
+	#[Accessor([
+		'getter' => 'getCompany',
+		'setter' => 'setCompany',
+	])]
 	private ?string $company = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Address1')]
+	#[Accessor([
+		'getter' => 'getAddress1',
+		'setter' => 'setAddress1',
+	])]
 	private ?string $address1 = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Address2')]
+	#[Accessor([
+		'getter' => 'getAddress2',
+		'setter' => 'setAddress2',
+	])]
 	private ?string $address2 = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('City')]
+	#[Accessor([
+		'getter' => 'getCity',
+		'setter' => 'setCity',
+	])]
 	private ?string $city = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('State')]
+	#[Accessor([
+		'getter' => 'getState',
+		'setter' => 'setState',
+	])]
 	private ?string $state = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('PostalCode')]
+	#[Accessor([
+		'getter' => 'getPostalCode',
+		'setter' => 'setPostalCode',
+	])]
 	private ?string $postalCode = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Country')]
+	#[Accessor([
+		'getter' => 'getCountry',
+		'setter' => 'setCountry',
+	])]
 	private string $country;
 
 	#[Groups(['export'])]
 	#[SerializedName('Name')]
+	#[Accessor([
+		'getter' => 'getName',
+		'setter' => 'setName',
+	])]
 	private string $name;
 
 	#[Groups(['export'])]
 	#[SerializedName('Phone')]
+	#[Accessor([
+		'getter' => 'getPhone',
+		'setter' => 'setPhone',
+	])]
 	private ?string $phone = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('Email')]
-	private string $email;
+	#[Accessor([
+		'getter' => 'getEmail',
+		'setter' => 'setEmail',
+	])]
+	private ?string $email = null;
 
 	public function getCompany(): ?string
 	{
-		return $this->company;
+		return $this->limitOptionalString($this->company, static::STRING_100);
 	}
 
 	public function setCompany(?string $company): void
@@ -60,9 +106,10 @@ class Address extends Base
 		$this->company = $company;
 	}
 
+	#[VirtualProperty]
 	public function getAddress1(): ?string
 	{
-		return $this->address1;
+		return $this->limitOptionalString($this->address1, static::STRING_200);
 	}
 
 	public function setAddress1(?string $address1): void
@@ -72,7 +119,7 @@ class Address extends Base
 
 	public function getAddress2(): ?string
 	{
-		return $this->address2;
+		return $this->limitOptionalString($this->address2, static::STRING_200);
 	}
 
 	public function setAddress2(?string $address2): void
@@ -82,7 +129,7 @@ class Address extends Base
 
 	public function getCity(): ?string
 	{
-		return $this->city;
+		return $this->limitOptionalString($this->city, static::STRING_100);
 	}
 
 	public function setCity(?string $city): void
@@ -92,7 +139,7 @@ class Address extends Base
 
 	public function getState(): ?string
 	{
-		return $this->state;
+		return $this->limitOptionalString($this->state, static::STRING_100);
 	}
 
 	public function setState(?string $state): void
@@ -102,7 +149,7 @@ class Address extends Base
 
 	public function getPostalCode(): ?string
 	{
-		return $this->postalCode;
+		return $this->limitOptionalString($this->postalCode, static::STRING_50);
 	}
 
 	public function setPostalCode(?string $postalCode): void
@@ -122,7 +169,7 @@ class Address extends Base
 
 	public function getName(): string
 	{
-		return $this->name;
+		return $this->limitString($this->name, static::STRING_100);
 	}
 
 	public function setName(string $name): void
@@ -132,7 +179,7 @@ class Address extends Base
 
 	public function getPhone(): ?string
 	{
-		return $this->phone;
+		return $this->limitOptionalString($this->phone, static::STRING_50);
 	}
 
 	public function setPhone(?string $phone): void
@@ -140,14 +187,29 @@ class Address extends Base
 		$this->phone = $phone;
 	}
 
-	public function getEmail(): string
+	public function getEmail(): ?string
 	{
 		return $this->email;
 	}
 
-	public function setEmail(string $email): void
+	public function setEmail(?string $email): void
 	{
 		$this->email = $email;
+	}
+
+	/**
+	 * @return array<int, array<array-key, int|string>>
+	 */
+	public function rules(): array
+	{
+		return [
+			[
+				'country',
+				'string',
+				'min' => 2,
+				'max' => 2,
+			],
+		];
 	}
 
 	public static function fromCommerceAddress(CommerceOrder $commerceOrder, ?CraftAddress $commerceAddress, bool $includeEmail): ?self

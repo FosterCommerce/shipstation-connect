@@ -4,6 +4,8 @@ namespace fostercommerce\shipstationconnect\models;
 
 use craft\commerce\elements\Order as CommerceOrder;
 use fostercommerce\shipstationconnect\Plugin;
+use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation\AccessType;
 use JMS\Serializer\Annotation\Exclude;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\SerializedName;
@@ -11,53 +13,82 @@ use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\XmlList;
 use yii\base\InvalidConfigException;
 
+#[AccessType([
+	'type' => 'public_method',
+])]
 class Order extends Base
 {
-	/**
-	 * @var int
-	 */
-	public const SHORT_FIELD_LIMIT = 100;
-
-	/**
-	 * @var int
-	 */
-	public const LONG_FIELD_LIMIT = 1000;
-
 	#[Groups(['export'])]
 	#[SerializedName('OrderID')]
+	#[Accessor([
+		'getter' => 'getOrderId',
+		'setter' => 'setOrderId',
+	])]
 	private int $orderId;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderNumber')]
+	#[Accessor([
+		'getter' => 'getOrderNumber',
+		'setter' => 'setOrderNumber',
+	])]
 	private string $orderNumber;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderStatus')]
+	#[Accessor([
+		'getter' => 'getOrderStatus',
+		'setter' => 'setOrderStatus',
+	])]
 	private ?string $orderStatus = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderTotal')]
+	#[Accessor([
+		'getter' => 'getOrderTotal',
+		'setter' => 'setOrderTotal',
+	])]
 	private float $orderTotal;
 
 	#[Groups(['export'])]
 	#[SerializedName('TaxAmount')]
+	#[Accessor([
+		'getter' => 'getTaxAmount',
+		'setter' => 'setTaxAmount',
+	])]
 	private float $taxAmount;
 
 	#[Groups(['export'])]
 	#[SerializedName('ShippingAmount')]
+	#[Accessor([
+		'getter' => 'getShippingAmount',
+		'setter' => 'setShippingAmount',
+	])]
 	private float $shippingAmount;
 
 	#[Groups(['export'])]
 	#[SerializedName('LastModified')]
 	#[Type("DateTime<'n/j/Y H:i'>")]
+	#[Accessor([
+		'getter' => 'getLastModifiedDate',
+		'setter' => 'setLastModifiedDate',
+	])]
 	private ?\DateTime $lastModifiedDate = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('PaymentMethod')]
+	#[Accessor([
+		'getter' => 'getPaymentMethod',
+		'setter' => 'setPaymentMethod',
+	])]
 	private ?string $paymentMethod = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('ShippingMethod')]
+	#[Accessor([
+		'getter' => 'getShippingMethod',
+		'setter' => 'setShippingMethod',
+	])]
 	private ?string $shippingMethod = null;
 
 	/**
@@ -66,51 +97,95 @@ class Order extends Base
 	#[Groups(['export'])]
 	#[SerializedName('Items')]
 	#[XmlList(entry: 'Item')]
+	#[Accessor([
+		'getter' => 'getItems',
+		'setter' => 'setItems',
+	])]
 	private array $items;
 
 	#[Groups(['export'])]
 	#[SerializedName('Customer')]
+	#[Accessor([
+		'getter' => 'getCustomer',
+		'setter' => 'setCustomer',
+	])]
 	private ?Customer $customer = null;
 
 	#[Groups(['export'])]
 	#[SerializedName('InternalNotes')]
+	#[Accessor([
+		'getter' => 'getInternalNotes',
+		'setter' => 'setInternalNotes',
+	])]
 	private string $internalNotes = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('Gift')]
+	#[Accessor([
+		'getter' => 'getGift',
+		'setter' => 'setGift',
+	])]
 	private bool $gift = false;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderDate')]
 	#[Type("DateTime<'n/j/Y H:i'>")]
+	#[Accessor([
+		'getter' => 'getOrderDate',
+		'setter' => 'setOrderDate',
+	])]
 	private ?\DateTime $orderDate = null;
 
 	#[Exclude]
+	#[Accessor([
+		'getter' => 'getParent',
+		'setter' => 'setParent',
+	])]
 	private CommerceOrder $parent;
 
 	#[Groups(['export'])]
 	#[SerializedName('CustomField1')]
+	#[Accessor([
+		'getter' => 'getCustomField1',
+		'setter' => 'setCustomField1',
+	])]
 	private string $customField1 = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('CustomField2')]
+	#[Accessor([
+		'getter' => 'getCustomField2',
+		'setter' => 'setCustomField2',
+	])]
 	private string $customField2 = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('CustomField3')]
+	#[Accessor([
+		'getter' => 'getCustomField3',
+		'setter' => 'setCustomField3',
+	])]
 	private string $customField3 = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('CustomerNotes')]
+	#[Accessor([
+		'getter' => 'getCustomerNotes',
+		'setter' => 'setCustomerNotes',
+	])]
 	private string $customerNotes = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('GiftMessage')]
+	#[Accessor([
+		'getter' => 'getGiftMessage',
+		'setter' => 'setGiftMessage',
+	])]
 	private string $giftMessage = '';
 
-	public function getOrderId(): int
+	public function getOrderId(): string
 	{
-		return $this->orderId;
+		return $this->limitString($this->orderId, static::STRING_50);
 	}
 
 	public function setOrderId(int $orderId): void
@@ -120,7 +195,7 @@ class Order extends Base
 
 	public function getOrderNumber(): string
 	{
-		return $this->orderNumber;
+		return $this->limitString($this->orderNumber, static::STRING_50);
 	}
 
 	public function setOrderNumber(string $orderNumber): void
@@ -130,7 +205,7 @@ class Order extends Base
 
 	public function getOrderStatus(): ?string
 	{
-		return $this->orderStatus;
+		return $this->limitOptionalString($this->orderStatus, static::STRING_50);
 	}
 
 	public function setOrderStatus(?string $orderStatus): void
@@ -180,7 +255,7 @@ class Order extends Base
 
 	public function getPaymentMethod(): ?string
 	{
-		return $this->paymentMethod;
+		return $this->limitOptionalString($this->paymentMethod, static::STRING_50);
 	}
 
 	public function setPaymentMethod(?string $paymentMethod): void
@@ -190,7 +265,7 @@ class Order extends Base
 
 	public function getShippingMethod(): ?string
 	{
-		return $this->shippingMethod;
+		return $this->limitOptionalString($this->shippingMethod, static::STRING_100);
 	}
 
 	public function setShippingMethod(?string $shippingMethod): void
@@ -229,7 +304,7 @@ class Order extends Base
 	 */
 	public function getInternalNotes(): string
 	{
-		return substr(htmlspecialchars(static::asString($this->internalNotes)), 0, self::LONG_FIELD_LIMIT);
+		return $this->limitString($this->internalNotes, static::STRING_1000);
 	}
 
 	public function setInternalNotes(string $internalNotes): void
@@ -272,7 +347,7 @@ class Order extends Base
 	 */
 	public function getCustomField1(): string
 	{
-		return substr(htmlspecialchars(static::asString($this->customField1)), 0, self::SHORT_FIELD_LIMIT);
+		return $this->limitString($this->customField1, static::STRING_100);
 	}
 
 	public function setCustomField2(string $customField2): void
@@ -285,7 +360,7 @@ class Order extends Base
 	 */
 	public function getCustomField2(): string
 	{
-		return substr(htmlspecialchars(static::asString($this->customField2)), 0, self::SHORT_FIELD_LIMIT);
+		return $this->limitString($this->customField2, static::STRING_100);
 	}
 
 	public function setCustomField3(string $customField3): void
@@ -298,7 +373,7 @@ class Order extends Base
 	 */
 	public function getCustomField3(): string
 	{
-		return substr(htmlspecialchars(static::asString($this->customField3)), 0, self::SHORT_FIELD_LIMIT);
+		return $this->limitString($this->customField3, static::STRING_100);
 	}
 
 	public function setCustomerNotes(string $customerNotes): void
@@ -311,7 +386,7 @@ class Order extends Base
 	 */
 	public function getCustomerNotes(): string
 	{
-		return substr(htmlspecialchars(static::asString($this->customerNotes)), 0, self::LONG_FIELD_LIMIT);
+		return $this->limitString($this->customerNotes, static::STRING_1000);
 	}
 
 	public function setGiftMessage(string $giftMessage): void
@@ -324,7 +399,7 @@ class Order extends Base
 	 */
 	public function getGiftMessage(): string
 	{
-		return substr(htmlspecialchars(static::asString($this->giftMessage)), 0, self::LONG_FIELD_LIMIT);
+		return $this->limitString($this->giftMessage, static::STRING_1000);
 	}
 
 	/**

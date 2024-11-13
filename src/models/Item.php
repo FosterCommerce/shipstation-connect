@@ -10,43 +10,80 @@ use craft\elements\db\AssetQuery;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
 use fostercommerce\shipstationconnect\Plugin;
+use JMS\Serializer\Annotation\Accessor;
+use JMS\Serializer\Annotation\AccessType;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\SerializedName;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
+#[AccessType([
+	'type' => 'public_method',
+])]
 class Item extends Base
 {
 	#[Groups(['export'])]
 	#[SerializedName('SKU')]
+	#[Accessor([
+		'getter' => 'getSku',
+		'setter' => 'setSku',
+	])]
 	private string $sku;
 
 	#[Groups(['export'])]
 	#[SerializedName('Name')]
+	#[Accessor([
+		'getter' => 'getName',
+		'setter' => 'setName',
+	])]
 	private string $name;
 
 	#[Groups(['export'])]
 	#[SerializedName('Weight')]
+	#[Accessor([
+		'getter' => 'getWeight',
+		'setter' => 'setWeight',
+	])]
 	private float $weight;
 
 	#[Groups(['export'])]
 	#[SerializedName('Quantity')]
+	#[Accessor([
+		'getter' => 'getQuantity',
+		'setter' => 'setQuantity',
+	])]
 	private int $quantity;
 
 	#[Groups(['export'])]
 	#[SerializedName('UnitPrice')]
+	#[Accessor([
+		'getter' => 'getUnitPrice',
+		'setter' => 'setUnitPrice',
+	])]
 	private float $unitPrice;
 
 	#[Groups(['export'])]
 	#[SerializedName('ImageUrl')]
+	#[Accessor([
+		'getter' => 'getImageUrl',
+		'setter' => 'setImageUrl',
+	])]
 	private ?string $imageUrl = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('WeightUnits')]
+	#[Accessor([
+		'getter' => 'getWeightUnits',
+		'setter' => 'setWeightUnits',
+	])]
 	private string $weightUnits = '';
 
 	#[Groups(['export'])]
 	#[SerializedName('Adjustment')]
+	#[Accessor([
+		'getter' => 'getAdjustment',
+		'setter' => 'setAdjustment',
+	])]
 	private bool $adjustment = false;
 
 	/**
@@ -54,11 +91,15 @@ class Item extends Base
 	 */
 	#[Groups(['export'])]
 	#[SerializedName('Options')]
+	#[Accessor([
+		'getter' => 'getOptions',
+		'setter' => 'setOptions',
+	])]
 	private array $options = [];
 
 	public function getSku(): string
 	{
-		return $this->sku;
+		return $this->limitString($this->sku, static::STRING_100);
 	}
 
 	public function setSku(string $sku): void
@@ -68,7 +109,7 @@ class Item extends Base
 
 	public function getName(): string
 	{
-		return $this->name;
+		return $this->limitString($this->name, static::STRING_200);
 	}
 
 	public function setName(string $name): void
