@@ -122,7 +122,7 @@ class Order extends Base
 	#[Groups(['export'])]
 	#[SerializedName('Gift')]
 	#[Accessor([
-		'getter' => 'getGift',
+		'getter' => 'isGift',
 		'setter' => 'setGift',
 	])]
 	private bool $gift = false;

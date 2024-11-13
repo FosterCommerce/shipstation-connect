@@ -44,7 +44,7 @@ class Item extends Base
 		'getter' => 'getWeight',
 		'setter' => 'setWeight',
 	])]
-	private float $weight;
+	private float $weight = 0.0;
 
 	#[Groups(['export'])]
 	#[SerializedName('Quantity')]
@@ -81,7 +81,7 @@ class Item extends Base
 	#[Groups(['export'])]
 	#[SerializedName('Adjustment')]
 	#[Accessor([
-		'getter' => 'getAdjustment',
+		'getter' => 'isAdjustment',
 		'setter' => 'setAdjustment',
 	])]
 	private bool $adjustment = false;
