@@ -2,6 +2,7 @@
 
 namespace fostercommerce\shipstationconnect\services;
 
+use Craft;
 use craft\base\Component;
 use craft\commerce\elements\Order as CommerceOrder;
 use DOMDocument;
@@ -52,16 +53,18 @@ class Xml extends Component
 
 		$orders = Orders::fromCollection($orders, $pageCount);
 
-		if ($failed->isNotEmpty() && (Plugin::getInstance()?->settings->failOnValidation ?? true)) {
-			// TODO store error logs somewhere
-
+		if ($failed->isNotEmpty()) {
 			/** @var Order $firstFailedOrder */
 			$firstFailedOrder = $failed->first();
 			$firstErrrors = $firstFailedOrder->getFirstErrors();
 			$attribute = key($firstErrrors);
 			$value = reset($firstErrrors);
 
-			throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->getOrderId()}: {$attribute} - {$value}");
+			if (Plugin::getInstance()?->settings->failOnValidation ?? false) {
+				throw new \RuntimeException("Invalid Order ID {$firstFailedOrder->getOrderId()}: {$attribute} - {$value}");
+			}
+
+			Craft::error("Invalid Order ID {$firstFailedOrder->getOrderId()}: {$attribute} - {$value}", 'shipstationconnect');
 		}
 
 		$serializer = SerializerBuilder::create()->build();
