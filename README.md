@@ -6,7 +6,7 @@ A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
 ## Requirements
 
-This plugin requires Craft CMS 4 and Commerce 4 or later
+This plugin requires Craft CMS 5 and Commerce 5 or later
 
 ## Installation
 
