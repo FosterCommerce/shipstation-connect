@@ -231,7 +231,7 @@ class Item extends Base
 			if ($assetQuery === null) {
 				// Fallback to the product if the variant does not have an asset
 				/** @var ?AssetQuery<int, Asset> $assetQuery */
-				$assetQuery = $purchasable->product->{$productImagesHandle};
+				$assetQuery = $purchasable->getOwner()->{$productImagesHandle};
 			}
 
 			if ($assetQuery !== null) {

@@ -29,7 +29,7 @@ class Settings extends Model
 
 	public string $matrixFieldHandle = 'shippingInfo';
 
-	public string $blockTypeHandle = 'shippingInfo';
+	public string $entryTypeHandle = 'shippingInfo';
 
 	public string $carrierFieldHandle = 'carrier';
 

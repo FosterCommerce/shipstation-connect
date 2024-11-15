@@ -29,9 +29,9 @@
 		}
 	},
 	"require": {
-		"php": "^8.1",
-		"craftcms/cms": "^4.0",
-		"craftcms/commerce": "^4.0",
+		"php": "^8.2",
+		"craftcms/cms": "^5.0",
+		"craftcms/commerce": "^5.0",
 		"jms/serializer": "^3.31"
 	},
 	"require-dev": {
@@ -39,8 +39,7 @@
 		"craftcms/rector": "dev-main",
 		"fostercommerce/ecs": "dev-main",
 		"fostercommerce/rector": "dev-main",
-		"phpstan/phpstan": "^1.11",
-		"roave/security-advisories": "dev-latest"
+		"phpstan/phpstan": "^1.11"
 	},
 	"extra": {
 		"handle": "shipstationconnect",

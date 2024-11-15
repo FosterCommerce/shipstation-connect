@@ -7,12 +7,12 @@ use craft\commerce\elements\db\OrderQuery;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\db\Query;
-use craft\db\Table;
-use craft\elements\MatrixBlock;
+use craft\elements\Entry;
 use craft\fields\Matrix;
 use craft\helpers\App;
 use craft\helpers\ElementHelper;
-use craft\models\MatrixBlockType;
+use craft\helpers\StringHelper;
+use craft\models\EntryType;
 use craft\web\Application;
 use craft\web\Controller;
 use fostercommerce\shipstationconnect\events\FindOrderEvent;
@@ -114,15 +114,7 @@ class OrdersController extends Controller
 
 		$storeFieldHandle = Plugin::getInstance()?->settings->storesFieldHandle;
 		if ($store !== null && $storeFieldHandle !== '' && $storeFieldHandle !== null) {
-			$field = Craft::$app->getFields()->getFieldByHandle($storeFieldHandle);
-			if ($field === null) {
-				throw new \RuntimeException("Invalid field handle {$storeFieldHandle}");
-			}
-
-			$fieldColumnName = ElementHelper::fieldColumnFromField($field);
-			$query->andWhere([
-				$fieldColumnName => $store,
-			]);
+			$query->{$storeFieldHandle}($store);
 		}
 
 		$query->orderBy('dateUpdated asc');
@@ -204,12 +196,12 @@ class OrdersController extends Controller
 
 		$shippedStatusHandle = $settings?->shippedStatusHandle ?? '';
 		$matrixFieldHandle = $settings?->matrixFieldHandle ?? '';
-		$blockTypeHandle = $settings?->blockTypeHandle ?? '';
+		$entryTypeHandle = $settings?->entryTypeHandle ?? '';
 		$carrierFieldHandle = $settings?->carrierFieldHandle ?? '';
 		$serviceFieldHandle = $settings?->serviceFieldHandle ?? '';
 		$trackingNumberFieldHandle = $settings?->trackingNumberFieldHandle ?? '';
 
-		if ($shippedStatusHandle === '' || $matrixFieldHandle === '' || $blockTypeHandle === '' || $carrierFieldHandle === '' || $serviceFieldHandle === '' || $trackingNumberFieldHandle === '') {
+		if ($shippedStatusHandle === '' || $matrixFieldHandle === '' || $entryTypeHandle === '' || $carrierFieldHandle === '' || $serviceFieldHandle === '' || $trackingNumberFieldHandle === '') {
 			throw new \RuntimeException('Invalid or missing handle config');
 		}
 
@@ -229,27 +221,43 @@ class OrdersController extends Controller
 
 		// If the field exists
 		if ($matrix !== null) {
-			$blockType = $this->getBlockTypeByHandle($matrix->id, $blockTypeHandle);
+			// Find an existing entry for this order.
+			/** @var ?Entry $entry */
+			$entry = Entry::find()->owner($order)->field($matrix)->one();
 
-			if ($blockType instanceof MatrixBlockType && $this->validateShippingInformation($shippingInformation)) {
-				$block = new MatrixBlock([
-					'ownerId' => $order->id,
-					'fieldId' => $matrix->id,
-					'typeId' => $blockType->id,
-				]);
-				$block->setFieldValue($carrierFieldHandle, $shippingInformation['carrier']);
-				$block->setFieldValue($serviceFieldHandle, $shippingInformation['service']);
-				$block->setFieldValue($trackingNumberFieldHandle, $shippingInformation['trackingNumber']);
-
-				if (! Craft::$app->elements->saveElement($block)) {
-					Craft::warning(
-						Craft::t(
-							'shipstationconnect',
-							'Unable to save shipping information.'
-						),
-						__METHOD__
-					);
+			if ($entry === null) {
+				// If none exists, create a new entry
+				$entryType = Craft::$app->entries->getEntryTypeByHandle($entryTypeHandle);
+				if ($entryType instanceof EntryType && $this->validateShippingInformation($shippingInformation)) {
+					/** @var Entry $entry */
+					$entry = Craft::createObject([
+						'class' => Entry::class,
+						'uid' => StringHelper::UUID(),
+						'typeId' => $entryType->id,
+						'fieldId' => $matrix->id,
+						'owner' => $order,
+						'slug' => ElementHelper::tempSlug(),
+					]);
 				}
+			}
+
+			if ($entry === null) {
+				throw new \RuntimeException('Unable to create an entry for this matrix field');
+			}
+
+			// Set the shipment values
+			$entry->setFieldValue($carrierFieldHandle, $shippingInformation['carrier']);
+			$entry->setFieldValue($serviceFieldHandle, $shippingInformation['service']);
+			$entry->setFieldValue($trackingNumberFieldHandle, $shippingInformation['trackingNumber']);
+
+			if (! Craft::$app->elements->saveElement($entry)) {
+				Craft::warning(
+					Craft::t(
+						'shipstationconnect',
+						'Unable to save shipping information.'
+					),
+					__METHOD__
+				);
 			}
 		} else {
 			Craft::warning(
@@ -318,7 +326,7 @@ class OrdersController extends Controller
 
 			$order = $findOrderEvent->order;
 			if (! $order instanceof Order) {
-				if ($order = Order::find()->reference($orderNumber)->one()) {
+				if ($order = Order::find()->number($orderNumber)->one()) {
 					/** @var Order $order */
 					return $order;
 				}
@@ -351,38 +359,6 @@ class OrdersController extends Controller
 		/** @var Application $app */
 		$app = Craft::$app;
 		return $app;
-	}
-
-	private function getBlockTypeByHandle(int|string|null $fieldId, string $handle): ?MatrixBlockType
-	{
-		/** @var ?array<string, mixed> $result */
-		$result = (new Query())
-			->select([
-				'id',
-				'fieldId',
-				'fieldLayoutId',
-				'name',
-				'handle',
-				'sortOrder',
-				'uid',
-			])
-			->from([Table::MATRIXBLOCKTYPES])
-			->where([
-				'fieldId' => $fieldId,
-			])
-			->andWhere([
-				'handle' => $handle,
-			])
-			->orderBy([
-				'sortOrder' => SORT_ASC,
-			])
-			->one();
-
-		if ($result !== null) {
-			return new MatrixBlockType($result);
-		}
-
-		return null;
 	}
 
 	/**

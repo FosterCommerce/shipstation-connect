@@ -9,5 +9,5 @@ return RectorConfig::configure()
         __DIR__ . '/src',
         __FILE__,
     ])
-    ->withSets([SetList::CRAFT_CMS_40]);
+    ->withSets([SetList::CRAFT_CMS_50]);
 

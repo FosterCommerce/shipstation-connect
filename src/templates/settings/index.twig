@@ -39,6 +39,7 @@
       </p>
   </div>
 	{% set fields = craft.app.fields.allFields %}
+	{% set entryTypes = craft.app.entries.allEntryTypes %}
   {% set storeFields = fields|filter(f => is_dropdown(f))|map(f => { label: f.name, value: f.handle }) %}
   {% set storeFields = [{ label: 'Default', value: '' }]|merge(storeFields) %}
 
@@ -180,7 +181,7 @@
 
   {% if matrixFields|length == 0 or settings.matrixFieldHandle is null or settings.matrixFieldHandle|length == 0 %}
   <div class="error">
-    A matrix field with a block type and the following fields is required:
+    A matrix field with an entry type that has the following fields is required:
     <ul style="list-style:inherit">
       <li>Carrier text field</li>
       <li>Service text field</li>
@@ -193,16 +194,16 @@
       label: "Matrix Field Handle"|t('shipstationconnect'),
       name: 'settings[matrixFieldHandle]',
       value: settings.matrixFieldHandle,
-      options: matrixFields
+      options: matrixFields,
   }) }}
 
-  {{ forms.textField({
-      label: 'Block Type Handle'|t('shipstationconnect'),
-      instructions: ''|t('shipstationconnect'),
-      name: 'settings[blockTypeHandle]',
-      value: settings.blockTypeHandle,
-      errors: settings.getErrors('blockTypeHandle'),
-  }) }}
+	{% set entryTypes = craft.app.entries.getAllEntryTypes()|map(t => { label: t.name, value: t.handle }) %}
+	{{ forms.selectField({
+		label: "Entry Type Handle"|t('shipstationconnect'),
+		name: 'settings[entryTypeHandle]',
+		value: settings.entryTypeHandle,
+		options: entryTypes,
+	}) }}
 
   {{ forms.textField({
       label: 'Carrier Field Handle'|t('shipstationconnect'),
