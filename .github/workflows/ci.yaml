@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.2
       - run: composer install --prefer-dist --no-progress
       - name: Run ecs check
         run: |
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.2
       - run: composer install --prefer-dist --no-progress
       - name: Run rector --dry-run
         run: |
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.2
       - run: composer install --prefer-dist --no-progress
       - name: Run phpstan
         run: |
