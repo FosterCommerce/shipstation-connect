@@ -99,16 +99,17 @@ statuses to a single ShipStation status, when needed.
 
 ShipStation Connect requires a Matrix Field for storing shipping information.
 
-The matrix field should have a block type with text fields for the following:
+The matrix field should have a entry type with text fields for the following:
 
 - Carrier
 - Service
 - Tracking Number
 
-![Matrix Field configuration](screenshots/matrix_field.png)
+![Matrix Field configuration](screenshots/matrix-field.png)
 
 In the ShipStation Connnect settings, select the matrix field, and enter the
-handles for the block type and text fields.
+handles for the entry type and text fields.
+
 ![Shipping Info Matrix Field](screenshots/shipping-info-matrix-field.png)
 
 When a shipping notification is received for an order from ShipStation, the
