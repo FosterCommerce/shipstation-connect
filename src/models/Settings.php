@@ -40,4 +40,14 @@ class Settings extends Model
 	public bool $billingSameAsShipping = false;
 
 	public string $phoneNumberFieldHandle = '';
+
+	/**
+	 * Utility to help filter out fields we don't want to list on the settings page.
+	 *
+	 * @param class-string $className
+	 */
+	public static function isA(string $className, mixed $target): bool
+	{
+		return $target instanceof $className;
+	}
 }

@@ -8,6 +8,8 @@
 - Added `failOnValidation` config item and toggle in settings UI.
 - Removed the `Xml::ORDER_FIELD_EVENT` event. `Xml::ORDER_EVENT` should be used instead.
 - Removed `OrderFieldEvent`. All details about an order can be updated in a single event now.
+- Removed support for Craft's basic authentication through a dedicated Craft user.
+- Removed unnecessary Twig filters, `is_matrix`, `is_dropdown` and `is_asset`.
 
 ## 2.1.0 - 2024-05-24
 

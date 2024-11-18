@@ -6,7 +6,6 @@ use Craft;
 use craft\commerce\elements\db\OrderQuery;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as CommercePlugin;
-use craft\db\Query;
 use craft\elements\Entry;
 use craft\fields\Matrix;
 use craft\helpers\App;
@@ -36,20 +35,6 @@ class OrdersController extends Controller
 
 	protected array|int|bool $allowAnonymous = true;
 
-	public function init(): void
-	{
-		// Allow anonymous access only when this plugin is handling basic
-		// authentication, otherwise require auth so that Craft doesn't let
-		// unauthenticated requests go through.
-		$isUsingCraftAuth = Plugin::getInstance()?->isAuthHandledByCraft();
-		$this->allowAnonymous = ! $isUsingCraftAuth;
-		if ($isUsingCraftAuth) {
-			$this->requirePermission('shipstationconnect-processOrders');
-		}
-
-		parent::init();
-	}
-
 	/**
 	 * ShipStation will hit this action for processing orders, both POSTing and GETting.
 	 *   ShipStation will send a GET param 'action' of either shipnotify or export.
@@ -57,21 +42,17 @@ class OrdersController extends Controller
 	 *
 	 * @throws HttpException
 	 */
-	public function actionProcess(?string $store = null, ?string $action = null): YiiResponse
+	public function actionProcess(?string $store = null, ?string $action = null): ?YiiResponse
 	{
 		if (! $this->authenticate()) {
 			throw new HttpException(401, 'Invalid ShipStation username or password.');
 		}
 
-		switch ($action) {
-			case 'export':
-				$this->getOrders($store);
-				// no break
-			case 'shipnotify':
-				return $this->postShipment();
-			default:
-				throw new HttpException(400, 'No action set. Set the ?action= parameter as `export` or `shipnotify`.');
-		}
+		return match ($action) {
+			'export' => $this->getOrders($store),
+			'shipnotify' => $this->postShipment(),
+			default => throw new HttpException(400, 'Invalid action'),
+		};
 	}
 
 	/**
@@ -82,16 +63,15 @@ class OrdersController extends Controller
 	protected function authenticate(): bool
 	{
 		$plugin = Plugin::getInstance();
-		if ($plugin?->isAuthHandledByCraft()) {
-			return true;
-		}
 
+		/** @var string $expectedUsername */
 		$expectedUsername = App::parseEnv($plugin?->settings->shipstationUsername);
+		/** @var string $expectedPassword */
 		$expectedPassword = App::parseEnv($plugin?->settings->shipstationPassword);
 
 		[$username, $password] = $this->getApp()->getRequest()->getAuthCredentials();
 
-		return $expectedUsername === $username && $expectedPassword === $password;
+		return hash_equals($expectedUsername, $username) && hash_equals($expectedPassword, $password);
 	}
 
 	/**

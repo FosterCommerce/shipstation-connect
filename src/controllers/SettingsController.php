@@ -19,7 +19,6 @@ class SettingsController extends Controller
 		$plugin = Plugin::getInstance();
 		return $this->renderTemplate('shipstationconnect/settings/index', [
 			'settings' => $plugin?->settings,
-			'isUsingCraftAuth' => $plugin?->isAuthHandledByCraft(),
 		]);
 	}
 
@@ -27,7 +26,7 @@ class SettingsController extends Controller
 	 * @throws MissingComponentException
 	 * @throws BadRequestHttpException
 	 */
-	public function actionSave(): Response
+	public function actionSave(): void
 	{
 		$this->requirePostRequest();
 		/** @var Application $app */
@@ -44,13 +43,8 @@ class SettingsController extends Controller
 
 		if (! $settings->validate() || ! Craft::$app->getPlugins()->savePluginSettings($plugin, $settings->toArray())) {
 			Craft::$app->getSession()->setError(Craft::t('shipstationconnect', 'Couldn’t save settings.'));
-			return $this->renderTemplate('shipstationconnect/settings/index', [
-				'settings' => $settings,
-			]);
 		}
 
 		Craft::$app->getSession()->setNotice(Craft::t('shipstationconnect', 'Settings saved.'));
-
-		return $this->redirectToPostedUrl();
 	}
 }

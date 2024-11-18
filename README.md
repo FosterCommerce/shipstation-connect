@@ -57,24 +57,6 @@ credentials.
 As of version 1.2.4, these values can be set with environment variables.
 ![Username/Password variables](screenshots/username-password-env-values.png)
 
-#### Using Craft's Basic Authentication
-
-As of Craft 3.5.0 basic authentication headers can be used to authenticate users
-in Craft by setting the
-[enableBasicHttpAuth](https://github.com/craftcms/cms/commit/0bb12973635f8cd3cfa11e97b94306dc643c054b)
-config setting to `true`.
-
-If basic authentication is enabled for your site,
-ShipStation Connect will assume that requests to it have already been
-authenticated and continue processing. Using this feature removes the
-requirement to set a username/password in the settings and instead it is
-recommended to create a dedicated user with the
-`shipstationconnect-processOrders` permission for accessing ShipStation Connect.
-
-When `enableBasicHttpAuth` is `false`, the plugin will read the auth header and
-validate against the username/password configured in ShipStation Connect's
-settings.
-
 #### Debugging Apache Authentication Errors
 
 > The remote server returned an error

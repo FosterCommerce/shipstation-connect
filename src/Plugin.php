@@ -5,12 +5,9 @@ namespace fostercommerce\shipstationconnect;
 use Craft;
 use craft\base\Model;
 use craft\events\RegisterUrlRulesEvent;
-use craft\events\RegisterUserPermissionsEvent;
-use craft\services\UserPermissions;
 use craft\web\UrlManager;
 use fostercommerce\shipstationconnect\models\Settings;
 use fostercommerce\shipstationconnect\services\Xml;
-use fostercommerce\shipstationconnect\web\twig\filters\IsFieldTypeFilter;
 use yii\base\Event;
 
 /**
@@ -33,39 +30,11 @@ class Plugin extends \craft\base\Plugin
 			'xml' => Xml::class,
 		]);
 
-		Craft::$app->view->registerTwigExtension(new IsFieldTypeFilter());
-
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_CP_URL_RULES,
 			function (RegisterUrlRulesEvent $event): void {
 				$event->rules['shipstationconnect/settings'] = 'shipstationconnect/settings/index';
-				$event->rules['shipstationconnect/settings/save'] = 'shipstationconnect/settings/save';
-			}
-		);
-
-
-		Event::on(
-			UrlManager::class,
-			UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-			function (RegisterUrlRulesEvent $event): void {
-				$event->rules['export'] = 'shipstationconnect/orders/export';
-			}
-		);
-
-
-		Event::on(
-			UserPermissions::class,
-			UserPermissions::EVENT_REGISTER_PERMISSIONS,
-			function (RegisterUserPermissionsEvent $event): void {
-				$event->permissions[] = [
-					'heading' => 'ShipStation Connect',
-					'permissions' => [
-						'shipstationconnect-processOrders' => [
-							'label' => 'Process Orders',
-						],
-					],
-				];
 			}
 		);
 	}
