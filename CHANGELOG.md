@@ -1,8 +1,9 @@
 # Changelog
 
-## 3.0.0 - Unreleased
+## 3.0.0-beta.1
 
-- Requires PHP 8.1 or higher.
+- Requires PHP 8.2 or higher.
+- Requires CraftCMS 5 or higher and Craft Commerce 5 or higher.
 - Added `Xml::ORDER_EVENT` event.
 - Added `OrderEvent`.
 - Added `failOnValidation` config item and toggle in settings UI.
