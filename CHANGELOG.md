@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0-beta.1
+## 3.0.0 - 2024-11-27
 
 - Requires PHP 8.2 or higher.
 - Requires CraftCMS 5 or higher and Craft Commerce 5 or higher.
