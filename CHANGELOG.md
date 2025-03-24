@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.5 - 2025-07-28
+
+- Fixes an issue where the order was not being found because it was using the order number instead of the order reference.
+
 ## 3.0.4 - 2025-07-22
 
 - Fixes an issue where an order ID with a prefix would become `0`
