@@ -188,8 +188,12 @@ class Order extends Base
 		return $this->limitString($this->orderId, static::STRING_50);
 	}
 
-	public function setOrderId(int $orderId): void
+	public function setOrderId(string|int $orderId): void
 	{
+		if (is_string($orderId)) {
+			$orderId = (int) $orderId;
+		}
+
 		$this->orderId = $orderId;
 	}
 

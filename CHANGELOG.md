@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.1 - 2025-03-24
+
+- Fixes issue where the order ID is passed as a string instead of an int.
+
 ## 3.0.0 - 2024-11-27
 
 - Requires PHP 8.2 or higher.
