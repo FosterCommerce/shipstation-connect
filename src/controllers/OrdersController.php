@@ -306,7 +306,7 @@ class OrdersController extends Controller
 
 			$order = $findOrderEvent->order;
 			if (! $order instanceof Order) {
-				if ($order = Order::find()->number($orderNumber)->one()) {
+				if ($order = Order::find()->reference($orderNumber)->one()) {
 					/** @var Order $order */
 					return $order;
 				}
