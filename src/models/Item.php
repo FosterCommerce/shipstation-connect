@@ -14,6 +14,7 @@ use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\AccessType;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\SerializedName;
+use JMS\Serializer\Annotation\XmlList;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
@@ -91,6 +92,7 @@ class Item extends Base
 	 */
 	#[Groups(['export'])]
 	#[SerializedName('Options')]
+	#[XmlList(entry: 'Option')]
 	#[Accessor([
 		'getter' => 'getOptions',
 		'setter' => 'setOptions',

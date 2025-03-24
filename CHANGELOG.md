@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.2 - 2025-03-24
+
+- Fixes incorrect name for an option in the item options list.
+
 ## 3.0.1 - 2025-03-24
 
 - Fixes issue where the order ID is passed as a string instead of an int.
