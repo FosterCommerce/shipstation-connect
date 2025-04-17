@@ -3,6 +3,7 @@
 namespace fostercommerce\shipstationconnect\models;
 
 use craft\commerce\elements\Variant;
+use craft\commerce\enums\LineItemType;
 use craft\commerce\models\LineItem;
 use craft\commerce\Plugin as CommercePlugin;
 use craft\elements\Asset;
@@ -224,24 +225,34 @@ class Item extends Base
 		};
 
 		$imageUrl = null;
-		$productImagesHandle = Plugin::getInstance()?->settings->productImagesHandle;
-		/** @var ?Variant $purchasable */
-		$purchasable = $lineItem->getPurchasable();
-		if ($productImagesHandle !== null && $purchasable !== null) {
-			/** @var ?AssetQuery<int, Asset> $assetQuery */
-			$assetQuery = $purchasable->{$productImagesHandle};
-			if ($assetQuery === null) {
-				// Fallback to the product if the variant does not have an asset
-				/** @var ?AssetQuery<int, Asset> $assetQuery */
-				$assetQuery = $purchasable->getOwner()->{$productImagesHandle};
-			}
+		$productImagesHandle = trim(Plugin::getInstance()?->settings->productImagesHandle ?? '');
 
-			if ($assetQuery !== null) {
-				/** @var ?Asset $asset */
-				$asset = $assetQuery->one();
-				$assetUrl = $asset?->getUrl();
-				if ($assetUrl !== null) {
-					$imageUrl = UrlHelper::siteUrl($assetUrl);
+		if ($productImagesHandle === '') {
+			// Ensure that if the handle is an empty string, it is still considered empty.
+			$productImagesHandle = null;
+		}
+
+		// Custom line items do not have a Commerce purchasable.
+		if ($lineItem->type !== LineItemType::Custom && $productImagesHandle !== null) {
+			/** @var ?Variant $purchasable */
+			$purchasable = $lineItem->getPurchasable();
+
+			if ($purchasable !== null) {
+				/** @var ?AssetQuery<int, Asset> $assetQuery */
+				$assetQuery = $purchasable->{$productImagesHandle};
+				if ($assetQuery === null) {
+					// Fallback to the product if the variant does not have an asset
+					/** @var ?AssetQuery<int, Asset> $assetQuery */
+					$assetQuery = $purchasable->getOwner()->{$productImagesHandle};
+				}
+
+				if ($assetQuery !== null) {
+					/** @var ?Asset $asset */
+					$asset = $assetQuery->one();
+					$assetUrl = $asset?->getUrl();
+					if ($assetUrl !== null) {
+						$imageUrl = UrlHelper::siteUrl($assetUrl);
+					}
 				}
 			}
 		}
