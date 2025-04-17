@@ -224,7 +224,13 @@ class Xml extends Component
             ],
             'ImageUrl' => [
                 'callback' => function ($item) {
-                    $productImagesHandle = Plugin::getInstance()->getSettings()->productImagesHandle;
+                    $productImagesHandle = trim(Plugin::getInstance()->getSettings()->productImagesHandle ?? '');
+
+                    if ($productImagesHandle === '') {
+                        // Ensure that if the handle is an empty string, it is still considered empty.
+                        $productImagesHandle = null;
+                    }
+
                     $purchasable = $item->getPurchasable();
                     if ($productImagesHandle !== null && $purchasable !== null) {
                         $assetQuery = $purchasable->{$productImagesHandle};
