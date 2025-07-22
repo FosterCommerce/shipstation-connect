@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixes an issue where an order ID with a prefix would become `0`
+
 ## 3.0.3 - 2025-04-17
 
 - Fixes an issue where the productImagesHandle could sometimes be an empty string instead of null.

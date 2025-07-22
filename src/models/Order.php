@@ -24,7 +24,7 @@ class Order extends Base
 		'getter' => 'getOrderId',
 		'setter' => 'setOrderId',
 	])]
-	private int $orderId;
+	private string $orderId;
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderNumber')]
@@ -190,11 +190,7 @@ class Order extends Base
 
 	public function setOrderId(string|int $orderId): void
 	{
-		if (is_string($orderId)) {
-			$orderId = (int) $orderId;
-		}
-
-		$this->orderId = $orderId;
+		$this->orderId = (string) $orderId;
 	}
 
 	public function getOrderNumber(): string
@@ -432,7 +428,7 @@ class Order extends Base
 	 */
 	public static function fromCommerceOrder(CommerceOrder $commerceOrder): self
 	{
-		$prefix = Plugin::getInstance()?->settings->orderIdPrefix ?? '';
+		$prefix = trim(Plugin::getInstance()?->settings->orderIdPrefix ?? '');
 
 		$items = array_map(Item::fromCommerceLineItem(...), $commerceOrder->lineItems);
 
