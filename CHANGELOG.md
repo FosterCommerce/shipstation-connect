@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.0.4 - 2025-07-22
 
 - Fixes an issue where an order ID with a prefix would become `0`
 
