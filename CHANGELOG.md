@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.6 - 2026-01-03
+
+- Ensures orders that have no line items are not included in exports. Adds a warning log when any are found.
+
 ## 3.0.5 - 2025-07-28
 
 - Fixes an issue where the order was not being found because it was using the order number instead of the order reference.

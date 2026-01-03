@@ -31,6 +31,18 @@ class Xml extends Component
 		/** @var Collection<int, Order> $failed */
 		[$orders, $failed] = collect($commerceOrders)
 			->map(Order::fromCommerceOrder(...))
+			->filter(static function (Order $order): bool {
+				$items = $order->getItems();
+				if ($items === []) {
+					Craft::warning(
+						"Order {$order->getOrderId()} found with no line items. Excluding from ShipStation export.",
+						'shipstationconnect'
+					);
+					return false;
+				}
+
+				return true;
+			})
 			->map(static function (Order $order): Order {
 				$orderEvent = new OrderEvent([
 					'order' => $order,
