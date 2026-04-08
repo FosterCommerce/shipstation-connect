@@ -213,7 +213,7 @@ class Item extends Base
 	 */
 	public static function fromCommerceLineItem(LineItem $lineItem): self
 	{
-		/** @var array{sku: string} $snapshot */
+		/** @var array{sku?: string} $snapshot */
 		$snapshot = Json::decodeIfJson($lineItem->snapshot);
 
 		/** @var string $weightUnits */
@@ -258,7 +258,7 @@ class Item extends Base
 		}
 
 		return new self([
-			'sku' => $snapshot['sku'],
+			'sku' => $snapshot['sku'] ?? $lineItem->getSku(),
 			'name' => substr($lineItem->getDescription(), 0, 200),
 			'weight' => $weight,
 			'weightUnits' => $weightUnits,

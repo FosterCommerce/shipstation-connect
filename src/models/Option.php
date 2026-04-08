@@ -43,8 +43,14 @@ class Option extends Base
 		return $this->limitString($this->value, static::STRING_100);
 	}
 
-	public function setValue(string $value): void
+	public function setValue(mixed $value): void
 	{
-		$this->value = $value;
+		if (is_string($value)) {
+			$this->value = $value;
+		} elseif ($value instanceof \Stringable) {
+			$this->value = (string) $value;
+		} else {
+			$this->value = json_encode($value, JSON_THROW_ON_ERROR);
+		}
 	}
 }

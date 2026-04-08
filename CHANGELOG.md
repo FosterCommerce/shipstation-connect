@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.7 - 2026-04-08
+
+- Serialize non-Stringable line item options before sending data to ShipStation.
+- Use the SKU on the line item if the SKU in the snapshot is not available.
+
 ## 3.0.6 - 2026-01-03
 
 - Ensures orders that have no line items are not included in exports. Adds a warning log when any are found.
