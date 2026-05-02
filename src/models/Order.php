@@ -3,6 +3,9 @@
 namespace fostercommerce\shipstationconnect\models;
 
 use craft\commerce\elements\Order as CommerceOrder;
+use craft\commerce\models\LineItem;
+use craft\helpers\MoneyHelper;
+use fostercommerce\shipments\elements\Shipment;
 use fostercommerce\shipstationconnect\Plugin;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\AccessType;
@@ -11,6 +14,8 @@ use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\SerializedName;
 use JMS\Serializer\Annotation\Type;
 use JMS\Serializer\Annotation\XmlList;
+use Money\Money;
+use RuntimeException;
 use yii\base\InvalidConfigException;
 
 #[AccessType([
@@ -44,27 +49,30 @@ class Order extends Base
 
 	#[Groups(['export'])]
 	#[SerializedName('OrderTotal')]
+	#[Type('string')]
 	#[Accessor([
 		'getter' => 'getOrderTotal',
 		'setter' => 'setOrderTotal',
 	])]
-	private float $orderTotal;
+	private Money $orderTotal;
 
 	#[Groups(['export'])]
 	#[SerializedName('TaxAmount')]
+	#[Type('string')]
 	#[Accessor([
 		'getter' => 'getTaxAmount',
 		'setter' => 'setTaxAmount',
 	])]
-	private float $taxAmount;
+	private Money $taxAmount;
 
 	#[Groups(['export'])]
 	#[SerializedName('ShippingAmount')]
+	#[Type('string')]
 	#[Accessor([
 		'getter' => 'getShippingAmount',
 		'setter' => 'setShippingAmount',
 	])]
-	private float $shippingAmount;
+	private Money $shippingAmount;
 
 	#[Groups(['export'])]
 	#[SerializedName('LastModified')]
@@ -213,32 +221,32 @@ class Order extends Base
 		$this->orderStatus = $orderStatus;
 	}
 
-	public function getOrderTotal(): float
+	public function getOrderTotal(): string
 	{
-		return $this->orderTotal;
+		return self::moneyToDecimal($this->orderTotal);
 	}
 
-	public function setOrderTotal(float $orderTotal): void
+	public function setOrderTotal(Money $orderTotal): void
 	{
 		$this->orderTotal = $orderTotal;
 	}
 
-	public function getTaxAmount(): float
+	public function getTaxAmount(): string
 	{
-		return $this->taxAmount;
+		return self::moneyToDecimal($this->taxAmount);
 	}
 
-	public function setTaxAmount(float $taxAmount): void
+	public function setTaxAmount(Money $taxAmount): void
 	{
 		$this->taxAmount = $taxAmount;
 	}
 
-	public function getShippingAmount(): float
+	public function getShippingAmount(): string
 	{
-		return $this->shippingAmount;
+		return self::moneyToDecimal($this->shippingAmount);
 	}
 
-	public function setShippingAmount(float $shippingAmount): void
+	public function setShippingAmount(Money $shippingAmount): void
 	{
 		$this->shippingAmount = $shippingAmount;
 	}
@@ -430,7 +438,10 @@ class Order extends Base
 	{
 		$prefix = trim(Plugin::getInstance()?->settings->orderIdPrefix ?? '');
 
-		$items = array_map(Item::fromCommerceLineItem(...), $commerceOrder->lineItems);
+		$items = array_map(
+			static fn (LineItem $lineItem): Item => Item::fromCommerceLineItem($lineItem, $lineItem->qty),
+			$commerceOrder->lineItems,
+		);
 
 		// Include a discount as a line item if there is one.
 		$totalDiscount = $commerceOrder->getTotalDiscount();
@@ -438,13 +449,15 @@ class Order extends Base
 			$items[] = Item::asAdjustment('couponCode', $totalDiscount);
 		}
 
+		$currency = $commerceOrder->getPaymentCurrency();
+
 		return new self([
 			'orderId' => "{$prefix}{$commerceOrder->id}",
 			'orderNumber' => $commerceOrder->reference,
 			'orderStatus' => $commerceOrder->getOrderStatus()?->handle,
-			'orderTotal' => round($commerceOrder->totalPrice, 2),
-			'taxAmount' => $commerceOrder->getTotalTax(),
-			'shippingAmount' => $commerceOrder->getTotalShippingCost(),
+			'orderTotal' => self::amountToMoney($commerceOrder->totalPrice, $currency),
+			'taxAmount' => self::amountToMoney($commerceOrder->getTotalTax(), $currency),
+			'shippingAmount' => self::amountToMoney($commerceOrder->getTotalShippingCost(), $currency),
 			'orderDate' => $commerceOrder->dateOrdered ?? $commerceOrder->dateCreated,
 			'lastModifiedDate' => $commerceOrder->dateUpdated ?? $commerceOrder->dateCreated,
 			'paymentMethod' => $commerceOrder->getPaymentSource()?->description,
@@ -455,8 +468,73 @@ class Order extends Base
 		]);
 	}
 
+	/**
+	 * `OrderTotal` is the per-shipment line-item subtotal, NOT the parent order's `totalPrice`.
+	 * `fromCommerceOrder` sends the full parent total because the parent IS the order; here
+	 * ShipStation sees one row per shipment, so the row total is the shipment's own line-item
+	 * value. Tax, shipping, and discount ride on their own fields/items when enabled.
+	 *
+	 * Discount mirrors `fromCommerceOrder` by appending a synthesized `couponCode` adjustment
+	 * line item so the ShipStation line-item total reconciles to `OrderTotal - |discount|`.
+	 *
+	 * @throws InvalidConfigException
+	 */
+	public static function fromShipment(Shipment $shipment, ShipmentExportContext $context): self
+	{
+		/** @var Plugin $plugin */
+		$plugin = Plugin::getInstance();
+		$orderIdPrefix = trim($plugin->settings->orderIdPrefix);
+
+		$items = $context->items;
+		if (! $context->discount->isZero()) {
+			$items[] = Item::asAdjustment('couponCode', (float) self::moneyToDecimal($context->discount));
+		}
+
+		$commerceOrder = $context->commerceOrder;
+
+		return new self([
+			'orderId' => "{$orderIdPrefix}{$commerceOrder->id}-{$shipment->id}",
+			'orderNumber' => (string) $shipment->reference,
+			'orderStatus' => $shipment->fulfillmentStatus,
+			'orderTotal' => $context->subtotal->add($context->discount),
+			'taxAmount' => $context->tax,
+			'shippingAmount' => $context->shipping,
+			'orderDate' => $shipment->dateCreated ?? $commerceOrder->dateOrdered ?? $commerceOrder->dateCreated,
+			'lastModifiedDate' => $shipment->dateUpdated ?? $commerceOrder->dateUpdated ?? $commerceOrder->dateCreated,
+			'paymentMethod' => $context->paymentMethod,
+			'shippingMethod' => $commerceOrder->shippingMethodHandle,
+			'items' => $items,
+			'customer' => $context->customer,
+			'parent' => $commerceOrder,
+		]);
+	}
+
 	protected function setParent(CommerceOrder $parent): void
 	{
 		$this->parent = $parent;
+	}
+
+	private static function moneyToDecimal(Money $money): string
+	{
+		$decimal = MoneyHelper::toDecimal($money);
+		if ($decimal === false) {
+			throw new RuntimeException('Failed to format Money as decimal string.');
+		}
+
+		return $decimal;
+	}
+
+	private static function amountToMoney(float $amount, string $currency): Money
+	{
+		$money = MoneyHelper::toMoney([
+			'value' => (string) $amount,
+			'currency' => $currency,
+		]);
+
+		if (! $money instanceof Money) {
+			throw new RuntimeException("Failed to convert amount to Money in currency “{$currency}”.");
+		}
+
+		return $money;
 	}
 }

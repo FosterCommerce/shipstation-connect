@@ -3,6 +3,7 @@
 namespace fostercommerce\shipstationconnect\models;
 
 use craft\base\Model;
+use craft\helpers\Json;
 
 abstract class Base extends Model
 {
@@ -31,7 +32,7 @@ abstract class Base extends Model
 		if ($value === null || is_scalar($value) || (is_object($value) && method_exists($value, '__toString'))) {
 			$stringValue = (string) $value;
 		} else {
-			$stringValue = json_encode($value, JSON_THROW_ON_ERROR);
+			$stringValue = Json::encode($value);
 		}
 
 		return htmlspecialchars(

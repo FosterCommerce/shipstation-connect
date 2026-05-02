@@ -33,6 +33,9 @@
 		"craftcms/commerce": "^5.0",
 		"jms/serializer": "^3.31"
 	},
+	"suggest": {
+		"fostercommerce/shipments": "Enables ShipStation as a Shipments-plugin provider, exposing each Shipment as a ShipStation custom-store order."
+	},
 	"require-dev": {
 		"craftcms/phpstan": "dev-main",
 		"craftcms/rector": "dev-main",

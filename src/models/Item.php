@@ -211,7 +211,7 @@ class Item extends Base
 	 * @throws Exception
 	 * @throws InvalidConfigException
 	 */
-	public static function fromCommerceLineItem(LineItem $lineItem): self
+	public static function fromCommerceLineItem(LineItem $lineItem, int $quantity): self
 	{
 		/** @var array{sku?: string} $snapshot */
 		$snapshot = Json::decodeIfJson($lineItem->snapshot);
@@ -262,7 +262,7 @@ class Item extends Base
 			'name' => substr($lineItem->getDescription(), 0, 200),
 			'weight' => $weight,
 			'weightUnits' => $weightUnits,
-			'quantity' => $lineItem->qty,
+			'quantity' => $quantity,
 			'unitPrice' => round($lineItem->salePrice, 2),
 			'imageUrl' => $imageUrl,
 			'options' => collect($lineItem->options)

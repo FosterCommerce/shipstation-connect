@@ -6,7 +6,11 @@ use Craft;
 use craft\base\Model;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
+use fostercommerce\shipments\events\RegisterIntegrationsEvent;
+use fostercommerce\shipments\Plugin as ShipmentsPlugin;
+use fostercommerce\shipments\services\Integrations;
 use fostercommerce\shipstationconnect\models\Settings;
+use fostercommerce\shipstationconnect\providers\ShipmentsProvider;
 use fostercommerce\shipstationconnect\services\Xml;
 use yii\base\Event;
 
@@ -30,11 +34,46 @@ class Plugin extends \craft\base\Plugin
 			'xml' => Xml::class,
 		]);
 
+		$this->registerCpRoutes();
+
+		if (class_exists(ShipmentsPlugin::class)) {
+			$this->registerShipmentsIntegration();
+		}
+	}
+
+	public function getXml(): Xml
+	{
+		/** @var Xml $xml */
+		$xml = $this->get('xml');
+		return $xml;
+	}
+
+	private function registerCpRoutes(): void
+	{
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_CP_URL_RULES,
 			function (RegisterUrlRulesEvent $event): void {
 				$event->rules['shipstationconnect/settings'] = 'shipstationconnect/settings/index';
+			}
+		);
+	}
+
+	private function registerShipmentsIntegration(): void
+	{
+		Event::on(
+			UrlManager::class,
+			UrlManager::EVENT_REGISTER_SITE_URL_RULES,
+			function (RegisterUrlRulesEvent $event): void {
+				$event->rules['shipstationconnect/shipments/<integrationHandle:\w+>'] = 'shipstationconnect/shipments-store/process';
+			}
+		);
+
+		Event::on(
+			Integrations::class,
+			Integrations::EVENT_REGISTER_INTEGRATIONS,
+			static function (RegisterIntegrationsEvent $event): void {
+				$event->types[] = ShipmentsProvider::class;
 			}
 		);
 	}
