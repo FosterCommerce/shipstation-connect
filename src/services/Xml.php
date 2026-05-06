@@ -68,10 +68,13 @@ class Xml extends Component
 		if ($failed->isNotEmpty()) {
 			/** @var Order $firstFailedOrder */
 			$firstFailedOrder = $failed->first();
+			/** @var array<int, string|string[]> $firstErrrors */
 			$firstErrrors = $firstFailedOrder->getFirstErrors();
 			$attribute = key($firstErrrors);
 			$keys = array_keys($firstErrrors);
 			$value = $firstErrrors[$keys[0]][0] ?? 'Unknown validation error';
+			// TODO getFirstErrors should always return array<string, string>, this shouldn't be necessary
+			/** @phpstan-ignore-next-line There used to be an issue with some rare cases that had nested values */
 			if (is_array($value)) {
 				// Weird nested array of validation errors
 				$value = $value[0];

@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.8 - 2026-04-10
+
+- Fixes an issue where calling `getOwner()` on a non-`Variant` purchasable would fail the export 
+
 ## 3.0.7 - 2026-04-08
 
 - Serialize non-Stringable line item options before sending data to ShipStation.

@@ -417,7 +417,7 @@ class Order extends Base
 	public function validateCustomer(string $customerAttribute): void
 	{
 		if ($this->customer instanceof Customer && ! $this->customer->validate()) {
-			foreach ($this->customer->getErrors() as $attribute => $error) {
+			foreach ($this->customer->getFirstErrors() as $attribute => $error) {
 				$this->addError("{$customerAttribute}.{$attribute}", $error);
 			}
 		}

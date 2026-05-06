@@ -92,7 +92,11 @@ class Customer extends Base
 	public function validateAddress(string $addressAttribute): void
 	{
 		if ($this->{$addressAttribute} instanceof Address && ! $this->{$addressAttribute}->validate()) {
-			foreach ($this->{$addressAttribute}->getErrors() as $attribute => $error) {
+			/**
+			 * @var string $attribute
+			 * @var string $error
+			 */
+			foreach ($this->{$addressAttribute}->getFirstErrors() as $attribute => $error) {
 				$this->addError("{$addressAttribute}.{$attribute}", $error);
 			}
 		}

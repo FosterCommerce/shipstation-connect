@@ -2,6 +2,7 @@
 
 namespace fostercommerce\shipstationconnect\models;
 
+use craft\commerce\base\Purchasable;
 use craft\commerce\elements\Variant;
 use craft\commerce\enums\LineItemType;
 use craft\commerce\models\LineItem;
@@ -234,13 +235,13 @@ class Item extends Base
 
 		// Custom line items do not have a Commerce purchasable.
 		if ($lineItem->type !== LineItemType::Custom && $productImagesHandle !== null) {
-			/** @var ?Variant $purchasable */
+			/** @var ?Purchasable $purchasable */
 			$purchasable = $lineItem->getPurchasable();
 
 			if ($purchasable !== null) {
 				/** @var ?AssetQuery<int, Asset> $assetQuery */
 				$assetQuery = $purchasable->{$productImagesHandle};
-				if ($assetQuery === null) {
+				if ($assetQuery === null && $purchasable instanceof Variant) {
 					// Fallback to the product if the variant does not have an asset
 					/** @var ?AssetQuery<int, Asset> $assetQuery */
 					$assetQuery = $purchasable->getOwner()->{$productImagesHandle};
