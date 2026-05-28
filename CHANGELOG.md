@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.9 - 2026-05-28
+
+- Fixes an issue where string fields were HTML-encoded before truncation, inflating them past ShipStation's length limits and failing XML validation.
+
 ## 3.0.8 - 2026-04-10
 
 - Fixes an issue where calling `getOwner()` on a non-`Variant` purchasable would fail the export 

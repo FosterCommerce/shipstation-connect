@@ -34,13 +34,7 @@ abstract class Base extends Model
 			$stringValue = json_encode($value, JSON_THROW_ON_ERROR);
 		}
 
-		return htmlspecialchars(
-			substr(
-				$stringValue,
-				0,
-				$limit
-			)
-		);
+		return mb_substr($stringValue, 0, $limit);
 	}
 
 	protected function limitOptionalString(mixed $value, int $limit): ?string
