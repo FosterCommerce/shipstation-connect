@@ -16,6 +16,7 @@ use fostercommerce\shipstationconnect\models\Item;
 use fostercommerce\shipstationconnect\models\Order;
 use fostercommerce\shipstationconnect\models\Orders;
 use fostercommerce\shipstationconnect\models\ShipmentExportContext;
+use fostercommerce\shipstationconnect\models\ShipmentItems;
 use fostercommerce\shipstationconnect\Plugin;
 use fostercommerce\shipstationconnect\providers\ShipmentsProvider;
 use Illuminate\Support\Collection;
@@ -105,7 +106,7 @@ class Xml extends Component
 
 		$lineItemsById = [];
 		foreach ($parent->lineItems as $lineItem) {
-			$lineItemsById[$lineItem->id] = $lineItem;
+			$lineItemsById[(int) $lineItem->id] = $lineItem;
 		}
 
 		$customer = Customer::fromCommerceOrder($parent);
@@ -115,8 +116,8 @@ class Xml extends Component
 		$subtotals = [];
 		foreach ($shipments as $index => $shipment) {
 			$built = $this->buildShipmentItems($shipment, $lineItemsById, $currency, $zeroMoney);
-			$itemsByIndex[$index] = $built['items'];
-			$subtotals[$index] = $built['subtotal'];
+			$itemsByIndex[$index] = $built->items;
+			$subtotals[$index] = $built->subtotal;
 		}
 
 		$discountAllocations = $this->allocateParentTotal(
@@ -163,14 +164,13 @@ class Xml extends Component
 	 * logged and skipped from both the items list and the subtotal so the two never disagree.
 	 *
 	 * @param array<int, CommerceLineItem> $lineItemsById
-	 * @return array{items: list<Item>, subtotal: Money}
 	 */
 	private function buildShipmentItems(
 		Shipment $shipment,
 		array $lineItemsById,
 		Currency $currency,
 		Money $zeroMoney,
-	): array {
+	): ShipmentItems {
 		$subtotalMoney = $zeroMoney;
 		$items = [];
 		foreach ($shipment->getLineItems() as $shipmentLineItem) {
@@ -199,10 +199,7 @@ class Xml extends Component
 			$subtotalMoney = $subtotalMoney->add($unitPriceMoney->multiply((string) $shipmentLineItem->qty));
 		}
 
-		return [
-			'items' => $items,
-			'subtotal' => $subtotalMoney,
-		];
+		return new ShipmentItems($items, $subtotalMoney);
 	}
 
 	/**
@@ -222,7 +219,7 @@ class Xml extends Component
 		]);
 
 		$ratios = array_map(static fn (Money $subtotal): int => (int) $subtotal->getAmount(), $subtotals);
-		if ($totalMoney->isZero() || array_sum($ratios) === 0) {
+		if ($ratios === [] || $totalMoney->isZero() || array_sum($ratios) === 0) {
 			return array_fill(0, count($subtotals), $zeroMoney);
 		}
 

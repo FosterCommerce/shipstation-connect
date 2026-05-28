@@ -6,19 +6,16 @@ namespace fostercommerce\shipstationconnect\controllers;
 
 use Craft;
 use craft\web\Controller;
-use craft\web\Response;
 use fostercommerce\shipments\errors\IntegrationException;
 use fostercommerce\shipments\errors\PermanentIntegrationException;
 use fostercommerce\shipments\Plugin as ShipmentsPlugin;
 use fostercommerce\shipstationconnect\providers\ShipmentsProvider;
 use Throwable;
 use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
 use yii\web\HttpException;
-use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 use yii\web\ServerErrorHttpException;
-use yii\web\UnauthorizedHttpException;
 
 /**
  * Single-URL custom-store endpoint for the Shipments-plugin provider. ShipStation only
@@ -35,9 +32,8 @@ class ShipmentsStoreController extends Controller
 	/**
 	 * @throws HttpException
 	 */
-	public function actionProcess(string $integrationHandle): Response
+	public function actionProcess(string $integrationHandle, ?string $action = null): Response
 	{
-		$action = (string) $this->request->getQueryParam('action');
 		if ($action !== ShipmentsProvider::ACTION_EXPORT && $action !== ShipmentsProvider::ACTION_SHIPNOTIFY) {
 			throw new BadRequestHttpException('Invalid action');
 		}
@@ -68,35 +64,17 @@ class ShipmentsStoreController extends Controller
 	}
 
 	/**
-	 * Translate a `PermanentIntegrationException` into the matching `HttpException` subclass
-	 * by sniffing `getCode()`. The Shipments plugin documents the 404/400 convention on
-	 * `Integrations::resolveEnabledProvider`; unknown codes fall through to 400 with a
-	 * warning so a future provider code addition surfaces in the log.
+	 * Map a `PermanentIntegrationException` to an HTTP status, matching the Shipments plugin's own
+	 * `ExportsController`/`WebhooksController` convention: 404 for an unknown/unbound handle, 400
+	 * for everything else.
 	 */
 	private function mapPermanentException(PermanentIntegrationException $permanentException): HttpException
 	{
 		$message = $permanentException->getMessage();
-		$code = $permanentException->getCode();
 
-		return match ($code) {
-			400 => new BadRequestHttpException($message, 0, $permanentException),
-			401 => new UnauthorizedHttpException($message, 0, $permanentException),
-			403 => new ForbiddenHttpException($message, 0, $permanentException),
-			404 => new NotFoundHttpException($message, 0, $permanentException),
-			405 => new MethodNotAllowedHttpException($message, 0, $permanentException),
-			500 => new ServerErrorHttpException($message, 0, $permanentException),
-			default => $this->fallbackBadRequest($message, $code, $permanentException),
-		};
-	}
-
-	private function fallbackBadRequest(string $message, int $code, PermanentIntegrationException $permanentException): BadRequestHttpException
-	{
-		Craft::warning(
-			sprintf('Unmapped PermanentIntegrationException code %d; mapping to 400. Message: %s', $code, $message),
-			'shipstationconnect',
-		);
-
-		return new BadRequestHttpException($message, 0, $permanentException);
+		return $permanentException->getCode() === 404
+			? new NotFoundHttpException($message, 0, $permanentException)
+			: new BadRequestHttpException($message, 0, $permanentException);
 	}
 
 	/**

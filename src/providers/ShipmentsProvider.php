@@ -88,13 +88,14 @@ class ShipmentsProvider extends Provider
 
 	public static function displayName(): string
 	{
-		return Craft::t('shipstationconnect', 'ShipStation');
+		return Craft::t('shipstationconnect', 'provider.displayName');
 	}
 
 	public function sendShipment(Shipment $shipment, Order $order): void
 	{
-		ShipmentsPlugin::getInstance()
-			->getIntegrationReferences()
+		/** @var ShipmentsPlugin $plugin */
+		$plugin = ShipmentsPlugin::getInstance();
+		$plugin->getIntegrationReferences()
 			->setIntegrationReference($shipment, (string) $this->handle, (string) $shipment->id);
 	}
 
@@ -116,11 +117,13 @@ class ShipmentsProvider extends Provider
 		$this->assertAuthorized($request);
 
 		$exportQuery = ShipmentExportQuery::fromRequest($request);
-		if ($exportQuery->statusHandle === null && $this->exportFulfillmentStatus !== null && $this->exportFulfillmentStatus !== '') {
+		if ($exportQuery->statusHandle === null && ($this->exportFulfillmentStatus ?? '') !== '') {
 			$exportQuery->statusHandle = $this->exportFulfillmentStatus;
 		}
 
-		$result = ShipmentsPlugin::getInstance()->getShipments()->findForExport($exportQuery);
+		/** @var ShipmentsPlugin $shipmentsPlugin */
+		$shipmentsPlugin = ShipmentsPlugin::getInstance();
+		$result = $shipmentsPlugin->getShipments()->findForExport($exportQuery);
 
 		/** @var ShipStationConnectPlugin $shipStationConnectPlugin */
 		$shipStationConnectPlugin = ShipStationConnectPlugin::getInstance();
@@ -130,6 +133,7 @@ class ShipmentsProvider extends Provider
 			$this,
 		);
 
+		/** @var Response $response */
 		$response = Craft::$app->getResponse();
 		$response->format = Response::FORMAT_RAW;
 		$response->content = $xmlString;
@@ -141,11 +145,12 @@ class ShipmentsProvider extends Provider
 	{
 		$this->assertAuthorized($request);
 
-		$reference = (string) $request->getBodyParam('order_number', '');
-		if ($reference === '') {
+		$reference = $this->bodyString($request, 'order_number');
+		if ($reference === null) {
 			throw new PermanentIntegrationException('Missing order_number on shipnotify.');
 		}
 
+		/** @var ShipmentsPlugin $plugin */
 		$plugin = ShipmentsPlugin::getInstance();
 		$shipment = $plugin->getShipments()->findOneByReference($reference);
 		if (! $shipment instanceof Shipment) {
@@ -160,14 +165,14 @@ class ShipmentsProvider extends Provider
 			'dateScheduledShip' => $this->bodyString($request, 'ship_date'),
 		], true);
 
-		if ($this->shippedFulfillmentCode !== null && $this->shippedFulfillmentCode !== '') {
+		if (($this->shippedFulfillmentCode ?? '') !== '') {
 			$payload->targetFulfillmentCode = $this->shippedFulfillmentCode;
-			$payload->fulfillmentStatusMessage = Craft::t('shipstationconnect', 'ShipStation “shipnotify” webhook');
+			$payload->fulfillmentStatusMessage = Craft::t('shipstationconnect', 'provider.shipnotifyWebhookMessage');
 		}
 
-		if ($this->shippedShippingCode !== null && $this->shippedShippingCode !== '') {
+		if (($this->shippedShippingCode ?? '') !== '') {
 			$payload->targetShippingCode = $this->shippedShippingCode;
-			$payload->shippingStatusMessage = Craft::t('shipstationconnect', 'ShipStation “shipnotify” webhook');
+			$payload->shippingStatusMessage = Craft::t('shipstationconnect', 'provider.shipnotifyWebhookMessage');
 		}
 
 		if (! $payload->validate()) {
@@ -181,40 +186,14 @@ class ShipmentsProvider extends Provider
 		return $shipment;
 	}
 
-	private function bodyString(Request $request, string $name): ?string
-	{
-		$value = $request->getBodyParam($name);
-		if (! is_string($value) || $value === '') {
-			return null;
-		}
-
-		return $value;
-	}
-
 	public function getSettingsHtml(): ?string
 	{
-		$fulfillmentCases = array_map(
-			static fn (FulfillmentStatus $case): array => [
-				'label' => $case->label(),
-				'value' => $case->value,
-			],
-			FulfillmentStatus::cases(),
-		);
-
-		$shippingCases = array_map(
-			static fn (ShippingStatus $case): array => [
-				'label' => $case->label(),
-				'value' => $case->value,
-			],
-			ShippingStatus::cases(),
-		);
-
 		return Craft::$app->getView()->renderTemplate(
 			'shipstationconnect/_cp/providers/shipments/settings',
 			[
 				'provider' => $this,
-				'fulfillmentCases' => $fulfillmentCases,
-				'shippingCases' => $shippingCases,
+				'fulfillmentCases' => self::enumOptions(FulfillmentStatus::cases()),
+				'shippingCases' => self::enumOptions(ShippingStatus::cases()),
 			],
 			View::TEMPLATE_MODE_CP,
 		);
@@ -245,6 +224,35 @@ class ShipmentsProvider extends Provider
 	}
 
 	/**
+	 * @return array<array-key, mixed>
+	 */
+	protected function defineRules(): array
+	{
+		return array_merge(parent::defineRules(), [
+			[['username', 'password'],
+				'string',
+				'skipOnEmpty' => true],
+			[['exportFulfillmentStatus', 'shippedFulfillmentCode'],
+				'in',
+				'range' => self::enumValuesWithEmpty(FulfillmentStatus::cases())],
+			[['shippedShippingCode'],
+				'in',
+				'range' => self::enumValuesWithEmpty(ShippingStatus::cases())],
+			[['sendTax', 'sendShipping', 'sendDiscount'], 'boolean'],
+		]);
+	}
+
+	private function bodyString(Request $request, string $name): ?string
+	{
+		$value = $request->getBodyParam($name);
+		if (! is_string($value) || $value === '') {
+			return null;
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Resolve the username + password ShipStation should be sending. Per-integration values win
 	 * when present and non-empty; otherwise fall back to the global plugin settings. Env-var
 	 * references are resolved via `App::parseEnv`.
@@ -258,8 +266,8 @@ class ShipmentsProvider extends Provider
 		$shipStationConnectPlugin = ShipStationConnectPlugin::getInstance();
 		$settings = $shipStationConnectPlugin->settings;
 
-		$username = $this->username !== null && $this->username !== '' ? $this->username : $settings->shipstationUsername;
-		$password = $this->password !== null && $this->password !== '' ? $this->password : $settings->shipstationPassword;
+		$username = ($this->username ?? '') !== '' ? $this->username : $settings->shipstationUsername;
+		$password = ($this->password ?? '') !== '' ? $this->password : $settings->shipstationPassword;
 
 		$expectedUsername = (string) App::parseEnv($username);
 		$expectedPassword = (string) App::parseEnv($password);
@@ -273,24 +281,11 @@ class ShipmentsProvider extends Provider
 
 	private function challengeAuth(string $message): UnauthorizedHttpException
 	{
-		Craft::$app->getResponse()
-			->getHeaders()
-			->set('WWW-Authenticate', 'Basic realm="ShipStation Connect"');
+		/** @var Response $response */
+		$response = Craft::$app->getResponse();
+		$response->getHeaders()->set('WWW-Authenticate', 'Basic realm="ShipStation Connect"');
 
 		return new UnauthorizedHttpException($message);
-	}
-
-	/**
-	 * @return array<array-key, mixed>
-	 */
-	protected function defineRules(): array
-	{
-		return array_merge(parent::defineRules(), [
-			[['username', 'password'], 'string', 'skipOnEmpty' => true],
-			[['exportFulfillmentStatus', 'shippedFulfillmentCode'], 'in', 'range' => self::enumValuesWithEmpty(FulfillmentStatus::cases())],
-			[['shippedShippingCode'], 'in', 'range' => self::enumValuesWithEmpty(ShippingStatus::cases())],
-			[['sendTax', 'sendShipping', 'sendDiscount'], 'boolean'],
-		]);
 	}
 
 	/**
@@ -303,5 +298,22 @@ class ShipmentsProvider extends Provider
 	private static function enumValuesWithEmpty(array $cases): array
 	{
 		return array_merge([''], array_map(static fn (BackedEnum $case): string => (string) $case->value, $cases));
+	}
+
+	/**
+	 * Build `{label, value}` option rows for a status enum, for the settings template's select fields.
+	 *
+	 * @param list<FulfillmentStatus|ShippingStatus> $cases
+	 * @return list<array{label: string, value: string}>
+	 */
+	private static function enumOptions(array $cases): array
+	{
+		return array_map(
+			static fn (FulfillmentStatus|ShippingStatus $case): array => [
+				'label' => $case->label(),
+				'value' => $case->value,
+			],
+			$cases,
+		);
 	}
 }

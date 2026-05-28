@@ -9,6 +9,7 @@ use craft\commerce\Plugin as CommercePlugin;
 use craft\elements\Asset;
 use craft\elements\db\AssetQuery;
 use craft\helpers\Json;
+use craft\helpers\MoneyHelper;
 use craft\helpers\UrlHelper;
 use fostercommerce\shipstationconnect\Plugin;
 use JMS\Serializer\Annotation\Accessor;
@@ -16,6 +17,7 @@ use JMS\Serializer\Annotation\AccessType;
 use JMS\Serializer\Annotation\Groups;
 use JMS\Serializer\Annotation\SerializedName;
 use JMS\Serializer\Annotation\XmlList;
+use Money\Money;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
@@ -196,13 +198,13 @@ class Item extends Base
 		$this->options = $options;
 	}
 
-	public static function asAdjustment(string $name, float $totalDiscount): self
+	public static function asAdjustment(string $name, Money $amount): self
 	{
 		return new self([
 			'sku' => '',
 			'name' => trim($name),
 			'quantity' => 1,
-			'unitPrice' => round($totalDiscount, 2),
+			'unitPrice' => (float) MoneyHelper::toDecimal($amount),
 			'adjustment' => true,
 		]);
 	}

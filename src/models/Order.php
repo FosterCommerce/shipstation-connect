@@ -443,13 +443,12 @@ class Order extends Base
 			$commerceOrder->lineItems,
 		);
 
-		// Include a discount as a line item if there is one.
-		$totalDiscount = $commerceOrder->getTotalDiscount();
-		if ($totalDiscount !== 0.0) {
+		$currency = $commerceOrder->getPaymentCurrency();
+
+		$totalDiscount = self::amountToMoney($commerceOrder->getTotalDiscount(), $currency);
+		if (! $totalDiscount->isZero()) {
 			$items[] = Item::asAdjustment('couponCode', $totalDiscount);
 		}
-
-		$currency = $commerceOrder->getPaymentCurrency();
 
 		return new self([
 			'orderId' => "{$prefix}{$commerceOrder->id}",
@@ -487,7 +486,7 @@ class Order extends Base
 
 		$items = $context->items;
 		if (! $context->discount->isZero()) {
-			$items[] = Item::asAdjustment('couponCode', (float) self::moneyToDecimal($context->discount));
+			$items[] = Item::asAdjustment('couponCode', $context->discount);
 		}
 
 		$commerceOrder = $context->commerceOrder;

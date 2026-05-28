@@ -2,23 +2,23 @@
 
 <div class="field">
 	<div class="heading">
-		<label>{{ "Custom XML Page URL"|t('shipstationconnect') }}</label>
+		<label>{{ 'settings.customXmlPageUrl.label'|t('shipstationconnect') }}</label>
 		<div class="instructions">
-			<p>{{ "When setting up your ShipStation Custom Store, enter this URL so ShipStation can retrieve and update orders for this integration."|t('shipstationconnect') }}</p>
+			<p>{{ 'settings.customXmlPageUrl.instructions'|t('shipstationconnect') }}</p>
 		</div>
 	</div>
-	<div class="input" style="margin-left: 2em;">
+	<div class="input">
 		{% if provider.handle %}
 			<pre><code>{{ siteUrl('shipstationconnect/shipments/' ~ provider.handle) }}</code></pre>
 		{% else %}
-			<em>{{ "Save the integration to see the URL."|t('shipstationconnect') }}</em>
+			<em>{{ 'settings.customXmlPageUrl.unsavedNotice'|t('shipstationconnect') }}</em>
 		{% endif %}
 	</div>
 </div>
 
 {{ forms.autosuggestField({
-	label: "Username"|t('shipstationconnect'),
-	instructions: "HTTP basic auth username ShipStation will send. Leave blank to fall back to the global ShipStation Connect plugin setting."|t('shipstationconnect'),
+	label: 'settings.username.label'|t('shipstationconnect'),
+	instructions: 'settings.username.instructions'|t('shipstationconnect'),
 	name: 'settings[username]',
 	value: provider.username,
 	class: 'ltr',
@@ -26,8 +26,8 @@
 }) }}
 
 {{ forms.autosuggestField({
-	label: "Password"|t('shipstationconnect'),
-	instructions: "HTTP basic auth password ShipStation will send. Leave blank to fall back to the global ShipStation Connect plugin setting."|t('shipstationconnect'),
+	label: 'settings.password.label'|t('shipstationconnect'),
+	instructions: 'settings.password.instructions'|t('shipstationconnect'),
 	name: 'settings[password]',
 	value: provider.password,
 	class: 'ltr',
@@ -35,46 +35,46 @@
 }) }}
 
 {{ forms.selectField({
-	label: "Export filter"|t('shipstationconnect'),
-	instructions: "Restrict the export to shipments at this fulfillment status."|t('shipstationconnect'),
+	label: 'settings.exportFilter.label'|t('shipstationconnect'),
+	instructions: 'settings.exportFilter.instructions'|t('shipstationconnect'),
 	name: 'settings[exportFulfillmentStatus]',
 	value: provider.exportFulfillmentStatus,
-	options: [{ label: 'No filter'|t('shipstationconnect'), value: '' }]|merge(fulfillmentCases),
+	options: [{ label: 'settings.exportFilter.noFilter'|t('shipstationconnect'), value: '' }]|merge(fulfillmentCases),
 }) }}
 
 {{ forms.selectField({
-	label: "Shipnotify fulfillment transition"|t('shipstationconnect'),
-	instructions: "Fulfillment status applied when ShipStation reports a shipment as shipped."|t('shipstationconnect'),
+	label: 'settings.shippedFulfillment.label'|t('shipstationconnect'),
+	instructions: 'settings.shippedFulfillment.instructions'|t('shipstationconnect'),
 	name: 'settings[shippedFulfillmentCode]',
 	value: provider.shippedFulfillmentCode,
-	options: [{ label: "Don’t transition"|t('shipstationconnect'), value: '' }]|merge(fulfillmentCases),
+	options: [{ label: 'settings.dontTransition'|t('shipstationconnect'), value: '' }]|merge(fulfillmentCases),
 }) }}
 
 {{ forms.selectField({
-	label: "Shipnotify shipping transition"|t('shipstationconnect'),
-	instructions: "Optional shipping-axis status applied alongside the fulfillment transition."|t('shipstationconnect'),
+	label: 'settings.shippedShipping.label'|t('shipstationconnect'),
+	instructions: 'settings.shippedShipping.instructions'|t('shipstationconnect'),
 	name: 'settings[shippedShippingCode]',
 	value: provider.shippedShippingCode,
-	options: [{ label: "Don’t transition"|t('shipstationconnect'), value: '' }]|merge(shippingCases),
+	options: [{ label: 'settings.dontTransition'|t('shipstationconnect'), value: '' }]|merge(shippingCases),
 }) }}
 
 {{ forms.lightswitchField({
-	label: "Send tax to ShipStation"|t('shipstationconnect'),
-	instructions: "Split the parent order’s tax pro-rata across its shipments and send the per-shipment portion. Off by default; tax is a parent-order figure and most stores prefer ShipStation to show $0 tax per shipment."|t('shipstationconnect'),
+	label: 'settings.sendTax.label'|t('shipstationconnect'),
+	instructions: 'settings.sendTax.instructions'|t('shipstationconnect'),
 	name: 'settings[sendTax]',
 	on: provider.sendTax,
 }) }}
 
 {{ forms.lightswitchField({
-	label: "Send shipping cost to ShipStation"|t('shipstationconnect'),
-	instructions: "Split the parent order’s shipping cost pro-rata across its shipments and send the per-shipment portion. Off by default; ShipStation usually pulls real carrier cost from the rate it purchases."|t('shipstationconnect'),
+	label: 'settings.sendShipping.label'|t('shipstationconnect'),
+	instructions: 'settings.sendShipping.instructions'|t('shipstationconnect'),
 	name: 'settings[sendShipping]',
 	on: provider.sendShipping,
 }) }}
 
 {{ forms.lightswitchField({
-	label: "Send discount to ShipStation"|t('shipstationconnect'),
-	instructions: "Split the parent order’s discount pro-rata across its shipments and send the per-shipment portion as a coupon adjustment line item. Off by default; discount is a parent-order figure."|t('shipstationconnect'),
+	label: 'settings.sendDiscount.label'|t('shipstationconnect'),
+	instructions: 'settings.sendDiscount.instructions'|t('shipstationconnect'),
 	name: 'settings[sendDiscount]',
 	on: provider.sendDiscount,
 }) }}
