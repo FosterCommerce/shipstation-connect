@@ -1,172 +1,69 @@
-![Header](resources/img/header.png)
+![ShipStation Connect](resources/img/header.png)
 
-# ShipStation Connect for Craft Commerce
+# ShipStation Connect
 
 A plugin for Craft Commerce that integrates with a ShipStation Custom Store.
 
+## Overview
+
+- Sends completed Commerce orders to ShipStation, so shipping is handled there instead of in Craft.
+- Marks an order shipped in Craft when it ships from ShipStation, and records the carrier, service, and tracking number on the order.
+- Runs on ShipStation's schedule. ShipStation requests orders changed inside a date range, so there is no export step in Craft.
+- Sends the whole order: line items with quantities, prices, weights, photos, and options, plus shipping and billing addresses, phone number, and totals.
+- Routes orders to separate ShipStation stores from a field on the order (one store per brand, for example).
+
+
 ## Requirements
 
-This plugin requires Craft CMS 5 and Commerce 5 or later
+- Craft CMS `^5.0`
+- Craft Commerce `^5.0`
+- PHP `^8.2`
 
-## Installation
+## Install
 
-Install ShipStation Connect from the Plugin Store or with Composer
-
-### From the Plugin Store
-
-Go to the Plugin Store in your project’s Control Panel and search for
-“ShipStation Connect.” Click on the “Install” button in its modal window.
-
-### With Composer
-
-Open your terminal (command line) and run the following commands:
-
-```bash
-# go to the project directory
-cd /path/to/my-project
-
-# tell Composer to load the plugin
+```sh
 composer require fostercommerce/shipstationconnect
-
-# tell Craft to install the plugin
-./craft install/plugin shipstationconnect
+./craft plugin/install shipstationconnect
 ```
 
-After installing, go to the Craft control panel plugin settings page to
-configure the settings for the plugin.
+Then set a username and password under **ShipStation Connect -> Settings**, and create a custom store in ShipStation pointing at the URL that page shows.
 
-## Custom Store Configuration
+See [`docs/installation.md`](./docs/installation.md) for the full guide.
 
-Configure your connection in ShipStation following these instructions:
-[ShipStation "Custom Store" integration](https://help.shipstation.com/hc/en-us/articles/360025856192-Custom-Store-Development-Guide#UUID-685007d9-4cda-06f2-d2f6-011ab46805af_UUID-001f552d-4260-aeb0-8a23-0f6ff166e045).
+## Order export
 
-### Connect Your Craft Store to ShipStation
+ShipStation calls the plugin's URL and gets back the completed orders that changed inside the date range it asks for, oldest first, one page at a time. There is no queue job and no stored export: every request reads Commerce live.
 
-The "URL to Custom XML Page" is shown in the ShipStation Connect settings view
-in Craft.
+An order that has no line items, no customer, or no shipping address is left out of the response rather than breaking the run.
 
-### Username/Password
+See [order export](./docs/user-guide/order-export.md).
 
-ShipStation allows you to set a custom username and password combination for a
-connected store. This combination should match the values stored in the
-ShipStation Connnect settings view in your Craft control panel.
+## Shipping notifications
 
-**Note:** These are *not* your ShipStation credentials, nor your Craft user
-credentials.
+When ShipStation reports a shipment, it calls the same URL with the carrier, service, and tracking number. The plugin sets the order to your shipped status and writes the three values into a Matrix field on the order, where your templates and emails can read them.
 
-As of version 1.2.4, these values can be set with environment variables.
-![Username/Password variables](screenshots/username-password-env-values.png)
+See [shipping notifications](./docs/user-guide/shipping-notifications.md).
 
-#### Debugging Apache Authentication Errors
+## Multiple stores
 
-> The remote server returned an error
+If you run more than one ShipStation store, point a Dropdown field on the order at the store it belongs to. The settings page then lists one URL per option, and each ShipStation store only ever sees its own orders.
 
-If you are seeing a 400 error (401 or 404 notably) and you're running on Apache.
-Try adding the following to your apache config.
+See [multiple ShipStation stores](./docs/user-guide/order-export.md#multiple-shipstation-stores).
 
-```
-CGIPassAuth On
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-```
+## Customizing what is sent
 
-### Order Statuses
+Every order passes through an event before it is serialized, so a site module can overwrite any field, fill the custom fields, or write internal notes. A second event lets you replace the query that finds an order when a shipping notification comes back.
 
-Ensure your shipping statuses in Craft Commerce and ShipStation match. You edit
-each platform to use custom statuses and ShipStation can match multiple Craft
-statuses to a single ShipStation status, when needed.
+See [customizing exported orders](./docs/dev-guide/customizing-exported-orders.md).
 
-## Commerce Integration
+## Documentation
 
-### Matrix Field
+See [`docs/`](./docs/index.md).
 
-ShipStation Connect requires a Matrix Field for storing shipping information.
+## License
 
-The matrix field should have a entry type with text fields for the following:
+Proprietary. See [LICENSE.md](./LICENSE.md).
 
-- Carrier
-- Service
-- Tracking Number
+## Credits
 
-![Matrix Field configuration](screenshots/matrix-field.png)
-
-In the ShipStation Connnect settings, select the matrix field, and enter the
-handles for the entry type and text fields.
-
-![Shipping Info Matrix Field](screenshots/shipping-info-matrix-field.png)
-
-When a shipping notification is received for an order from ShipStation, the
-plugin will add the shipping information to the Shipping Information field on
-the order and set the order to the Craft status paired with your ShipStation
-stores Shipped status.
-
-## Adding phone numbers to addresses sent to Shipstation
-
-Addresses are now part of Craft rather than Commerce, and the Phone number field was dropped from the address model. It
-is now necessary to add a custom field to the Address fields to store phone numbers.
-
-The plugin setting gives you the option to set the field handle that you are using for phone numbers. The contents of
-this field will then be sent to Shipstation within the address portions of the order data.
-
-## Custom Fields
-
-You can customize the data that is sent to ShipStation by listening to the `OrderEvent` event in a custom module or
-plugin, and set the values that you want per field, similar to the following example:
-
-```php
-use craft\base\Event;
-use fostercommerce\shipstationconnect\models\Order;
-use fostercommerce\shipstationconnect\events\OrderEvent;
-use fostercommerce\shipstationconnect\services\Xml;
-
-Event::on(
-	Xml::class,
-	Xml::ORDER_EVENT,
-	static function (OrderEvent $e) {
-	  // The transformed order - This is the data that will be sent to ShipStation.
-		$order = $e->order;
-		
-		// The source Commerce Order that was used to create the transformed order.
-		$commerceOrder = $order->getParent();
-
-		// Use full order number for OrderNumber
-		$order->setOrderNumber($commerceOrder->number);
-
-		// Set a custom field value
-		$order->setCustomField1(Currency::formatAsCurrency($commerceOrder->getAdjustmentsTotal(), 'USD'));
-
-		// Set internal notes
-		$order->setInternalNotes('Custom Field 1: Adjustments Total');
-	}
-);
-```
-
-`OrderEvent` properties:
-
-- `order` - The order that has been transformed into a format ready to be exported to ShipStation. 
-
-If you've changed the `OrderFieldEvent::FIELD_ORDER_NUMBER` field to be anything
-other than the order's reference number, you'll need to listen to the
-`OrdersController::FIND_ORDER_EVENT` to use your own query to fetch the order.
-In the example above, we're changing it to be the order's ID, so we would need
-to fetch the order by ID:
-
-```php
-use craft\base\Event;
-use craft\commerce\elements\Order as CommerceOrder;
-use fostercommerce\shipstationconnect\controllers\OrdersController;
-use fostercommerce\shipstationconnect\events\FindOrderEvent;
-
-Event::on(
-    OrdersController::class,
-    OrdersController::FIND_ORDER_EVENT,
-    function (FindOrderEvent $e) {
-        // Set the order so that ShipStation Connect can update it's shipping details.
-        $this->order = CommerceOrder::find()->number($e->orderNumber)->one();
-    }
-);
-```
-
-`FindOrderEvent` properties:
-
-- `orderNumber` - The order number sent by ShipStation.
-- `order` - The order that will be updated with shipping information.
+Brought to you by [Foster Commerce](https://fostercommerce.com).
